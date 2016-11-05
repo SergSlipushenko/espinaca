@@ -1,5 +1,5 @@
 --[[
-The module introduces cooperative multithreading for Nodemcu platform.
+The module introduces cooperative ``multithreading`` for Nodemcu platform.
 It works on top of callbacks and reuses system scheduler. Basically, it is
 nothing more then converter callbacks to async/await-like interface. With this
 module it is possible to do not-blocking sleeps `futures.sleep(1000)` and run 
@@ -25,7 +25,7 @@ local Future = function()
             self.pending = true
             if self.tmr and (self.tmr:state() ~= nil) then
                 self.tmr:start()
-            end    
+            end
             return function(...)
                 if self.tmr and (self.tmr:state() ~= nil) then 
                     self.tmr:unregister() 
@@ -51,9 +51,12 @@ local Future = function()
             end)
             return self
         end,
-        result = function(self)
+        wait = function(self)
             if not(self.pending) then error('Callback not set') end
             coroutine.yield()
+        end,        
+        result = function(self)
+            self:wait()
             if self._result then 
                 return unpack(self._result) 
             end
@@ -71,7 +74,7 @@ return {
         local tt = tmr.create()
         local ff = Future()
         tt:alarm(ms,tmr.ALARM_SINGLE, ff:callbk())
-        ff:result()
+        ff:wait()
     end,
     Future = Future
 }
