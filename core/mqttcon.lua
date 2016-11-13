@@ -21,7 +21,7 @@ return {
             ftr.sleep(500)
             ft = ftr.Future()
             ft:timeout(3000)
-            m:connect(secrets.MQTT.server, 1883, 0, ft:callbk())
+            m:connect(secrets.MQTT.server, secrets.MQTT.port, 0, ft:callbk())
             if ft:result() then
                 print('connected to MQTT as ' .. node_name)
                 for topic,v in pairs(routes) do
