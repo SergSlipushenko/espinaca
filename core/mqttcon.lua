@@ -17,12 +17,16 @@ return {
         local ff = ftr.Future()
         print('Try to connect to MQTT server ' .. secrets.MQTT.server)
         while self.running do
-            m:close()
-            ftr.sleep(500)
+            ftr.sleep(200)
             ft = ftr.Future()
-            ft:timeout(3000)
-            m:connect(secrets.MQTT.server, secrets.MQTT.port, 0, ft:callbk())
-            if ft:result() then
+            ft:timeout(20000)
+            m:close()            
+            ftr.sleep(200)
+            m:connect(secrets.MQTT.server, secrets.MQTT.port, 0, ft:callbk(), ft:callbk())
+            local cl, reason = ft:result()
+            if reason then
+                print('failed to connect to MQTT. Reason: ' .. reason)
+            elseif cl then
                 print('connected to MQTT as ' .. node_name)
                 for topic,v in pairs(routes) do
                     if m:subscribe(topic, v.qos, ff:callbk()) then
@@ -35,12 +39,11 @@ return {
                 m:on('offline', ftoff:callbk())
                 ftoff:result()
                 print('MQTT connection went offline.')
-                if self.running then print('reconnect...') end
             else
-                print('failed to connect to MQTT. retry...')
+                print('failed to connect to MQTT. Reason: timeout')
             end
             ft = nil
-            ftr.sleep(500)
+            if self.running then print('reconnect...') end
         end
         print('mqtt stopped')
     end,
