@@ -12,9 +12,14 @@ URL = 'http://api.thingspeak.com/update?api_key=%s&field1=%d&field2=%d&field3=%d
 secrets = dofile 'secrets.lua'
 
 function run()
-    for i=18,1,-1 do 
-        ftr.sleep(10000)
-        gpio.serout(pins.IO2,gpio.LOW,{50000,100000},i, function() end)
+    if cfg.warmup_time then
+        local counter = cfg.warmup_time
+        while counter > 0 do
+            local delay = (counter>10000 and 10000 or counter)
+            ftr.sleep(delay)
+            gpio.serout(pins.IO2,gpio.LOW,{50000,100000},counter/10000, function() end)
+            counter = counter - delay
+        end
     end
     while true do
         mhz19:get_co2_level(function(ppm) 
