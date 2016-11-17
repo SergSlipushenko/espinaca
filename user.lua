@@ -1,44 +1,45 @@
 -- Application example
 ftr = require 'futures'
-leds = require 'leds'
 cfg = dofile 'config.lua'
-mhz19 = require 'mhz19' 
+mhz19 = require 'mhz19'
+pins = require 'pins'
 
-leds:init(cfg.led_intensity, 8)
 mhz19:init(cfg.mhz19_pin)
-
-local _connected = false
+gpio.mode(pins.IO2, gpio.OUTPUT)
+gpio.write(pins.IO2, 0)
+bme280.init(pins.IO0,pins.IO5)
+URL = 'http://api.thingspeak.com/update?api_key=%s&field1=%d&field2=%d&field3=%d&field4=%d&field5=%d'
+secrets = dofile 'secrets.lua'
 
 function run()
-    leds:write(string.rep(leds.g,2) .. string.rep(leds.y,2) .. string.rep(leds.r,2) .. string.rep(leds.w,2))
-    mq:subscribe('actuators/led',0, function(msg)
-        local iter = string.gmatch(msg, '%d+')
-        local r, g, b = tonumber(iter()),tonumber(iter()),tonumber(iter())
-        print(r, g, b)
-        leds:write(string.rep(string.char(g,r,b),leds.total))
-    end)
-    
-    mq:subscribe('node/stdin', 0, function(msg)
-        if _connected and msg == ':q!' then 
-            _connected = false
-            node.output(nil)
-            return
-        end
-        if not _connected then 
-            _connected = true
-            node.output(function(msg) 
-                if mq.running then
-                    mq:publish('node/stdout', msg)
-                end
-            end, 1)       
-        end
-        if _connected then node.input(msg) end
-    end)
-      
+    for i=18,1,-1 do 
+        ftr.sleep(10000)
+        gpio.serout(pins.IO2,gpio.LOW,{50000,100000},i, function() end)
+    end
     while true do
         mhz19:get_co2_level(function(ppm) 
-            mq:publish('sensors/mhz19', '{"co2":'..ppm..'}') 
+            local press, temp=bme280.baro()
+            local hum,_=bme280.humi()
+            local heap = node.heap()
+            press = press/10 - 101325
+            temp = temp/10
+            hum = hum/100
+            if cfg.verbose then
+                print(ppm, temp,hum,press,heap)
+            end
+            if cfg.send then
+                url=URL:format(secrets.TS.api_key,ppm, temp,hum,press,heap)
+                http.get(url, nil, function(c,d) print(c) end)
+            end
+            if mq and mq.running then
+                mq:publish('sensors/airstation/co2', tostring(ppm))
+                mq:publish('sensors/airstation/temp', tostring(temp))
+                mq:publish('sensors/airstation/hum', tostring(hum))
+                mq:publish('sensors/airstation/press', tostring(press))
+                mq:publish('sensors/airstation/heap', tostring(heap))
+            end            
         end)
-        ftr.sleep(10000)
+        gpio.serout(pins.IO2,gpio.LOW,{50000,100000},3, function() end)
+        ftr.sleep(cfg.cycle)
     end
 end
