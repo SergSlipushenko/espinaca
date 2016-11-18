@@ -1,8 +1,4 @@
 print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n';
-if file.exists('main.lock') then 
-    print('main locked')
-    return 
-end
 local ftr=require('futures')
 local main_cfg = dofile('config.lua').main
 ftr.spawn(function()
