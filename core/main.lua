@@ -1,7 +1,7 @@
 print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n';
 local ftr=require('futures')
 local main_cfg = dofile('config.lua').main
-ftr.spawn(function()
+local net_conn = function(when_connected)
     if wifi and main_cfg.wifi then
         wificon = require('wificon')
         local ft_wifi = ftr.Future()
@@ -42,6 +42,17 @@ ftr.spawn(function()
         wifi.setmode(wifi.NULLMODE)
         print('wifi disabled')           
     end
+    when_connected()
+end
+ftr.spawn(function()
+    if main_cfg.wait_for_net then     
+        local ft_net = ftr.Future()
+        local when_connected = ft_net:callbk()
+        ftr.spawn(function() net_conn(when_connected) end)
+        ft_net:wait()
+    else
+        ftr.spawn(function() net_conn(function() end) end)
+    end
     if file.exists('user.lock') then 
         print('user locked')
         return 
@@ -57,5 +68,6 @@ ftr.spawn(function()
         else
             print('no run() to run')
         end
-    end 
- end)
+    end
+end)
+

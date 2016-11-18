@@ -56,7 +56,7 @@ local Future = function()
             coroutine.yield()
         end,        
         result = function(self)
-            self:wait()
+            if not self.done then self:wait() end
             if self._result then 
                 return unpack(self._result) 
             end

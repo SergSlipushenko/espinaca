@@ -1,14 +1,13 @@
 return {
     main = {
-        wifi = 1,
-        mqtt = 1,
-        console = 1    
+        wifi = true,
+        wait_for_net = true,
+        mqtt = false,
+        console = true   
     },
     warmup_time = 35000,
-    verbose = 1,
-    send = 1,
-    ledshow = 1,
-    led_intensity = 64,
+    verbose = true,
+    send = true,
     cycle = 15000,
     mhz19_pin = 2,
     base_font = u8g.font_10x20,
