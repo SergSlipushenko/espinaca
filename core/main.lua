@@ -1,4 +1,6 @@
 print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n';
+now = tmr.now
+very_now = now()
 local ftr=require('futures')
 local main_cfg = dofile('config.lua').main
 local net_conn = function(when_connected)
