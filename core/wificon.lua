@@ -2,22 +2,30 @@ local ftr = require('futures')
 local wifi_connect=function(aps)
     wifi.setmode(wifi.STATION)
     wifi.setphymode(wifi.PHYMODE_N)
+    local ft_list = ftr.Future()
+    wifi.sta.getap(ft_list:callbk())
+    local aps_around = ft_list:result()
+    if not aps_around then return end
     for k, ap in ipairs(aps) do
-        wifi.sta.config(ap.ssid,ap.pass,0)
-        print('Try connect to '..ap.ssid)
-        local ft = ftr.Future()
-        ft:timeout(10000)
-        wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, ft:callbk())
-        wifi.sta.connect()
-        local cdata = ft:result()
-        if cdata then
-            print('connected as '..cdata.IP)
-            wifi.eventmon.unregister(wifi.eventmon.STA_GOT_IP)
-            return
+        if aps_around[ap.ssid] then
+            wifi.sta.config(ap.ssid,ap.pass,0)
+            print('Try connect to '..ap.ssid)
+            local ft = ftr.Future()
+            ft:timeout(10000)
+            wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, ft:callbk())
+            wifi.sta.connect()
+            local cdata = ft:result()
+            if cdata then
+                print('connected as '..cdata.IP)
+                wifi.eventmon.unregister(wifi.eventmon.STA_GOT_IP)
+                return
+            else
+                print('connection failed')
+            end
+            ft = nil
         else
-            print('connection failed')
+            print('No '..ap.ssid..' around')
         end
-        ft = nil
     end
 end
 

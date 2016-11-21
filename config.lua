@@ -2,7 +2,7 @@ return {
     main = {
         wifi = true,
         wait_for_net = true,
-        mqtt = true,
+        mqtt = false,
         console = false   
     },
     warmup_time = 35000,

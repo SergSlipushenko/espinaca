@@ -1,6 +1,7 @@
 print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n';
-now = tmr.now
-very_now = now()
+local now = tmr.now
+local _start = now()
+timeit = function() return (now()-_start)/1000 end
 local ftr=require('futures')
 local main_cfg = dofile('config.lua').main
 local net_conn = function(when_connected)
@@ -72,4 +73,3 @@ ftr.spawn(function()
         end
     end
 end)
-

@@ -1,6 +1,7 @@
 pins = require 'pins'
 ftr = require 'futures'
-
+URL = 'http://api.thingspeak.com/update?api_key=%s&field1=%s&field2=%s&field3=%s&field4=%s&field5=%s'
+secrets = dofile 'secrets.lua'
 
 function run()
     cfg = dofile('config.lua')
@@ -12,10 +13,7 @@ function run()
     ftr.sleep(30)
     res = bme280.init(pins.IO5,pins.IO0)
     ftr.sleep(100)
-    if not res then
-        print('MBE280 faild to init')
-        return
-    end
+    if not res then print('BМE280 faild to init'); return end
     press, temp=bme280.baro()
     hum,_=bme280.humi()
     heap = tostring(node.heap())
@@ -23,19 +21,23 @@ function run()
     press = tostring((press or 0)/10 - 101325)
     temp = tostring((temp or 0)/10)
     hum = tostring((hum or 0)/100)
-    print(temp,hum,press,vdd,heap)
-    if mq then
-        mq:publish('sensors/air2/vdd', vdd)
-        mq:publish('sensors/air2/temp', temp)
-        mq:publish('sensors/air2/hum', hum)
-        mq:publish('sensors/air2/press', press)
-        mq:publish('sensors/air2/heap', heap)
-        mq:publish('sensors/air2/all', temp..' '..hum..' '..press..' '..vdd..' '..heap)
+    url=URL:format(secrets.TS.api_key,temp,hum,press,vdd,heap)
+    print(url)
+    ft_send = ftr.Future()
+    http.get(url, nil, ft_send:callbk())
+    print(ft_send:result()) 
+    if mq and mq:running() then
+        mq:publish('sensors/airmon/vdd', vdd)
+        mq:publish('sensors/airmon/temp', temp)
+        mq:publish('sensors/airmon/hum', hum)
+        mq:publish('sensors/airmon/press', press)
+        mq:publish('sensors/airmon/heap', heap)
+        mq:publish('sensors/airmon/all', temp..' '..hum..' '..press..' '..vdd..' '..heap)
         print('data sent')
         mq:stop()
         wificon:stop()
     end
-    print('job done in '..((now() - very_now)/1000)..' ms')
+    print('job done in '..(timeit())..' ms')
     print('go down for '.. (cfg.sleep_cycle or 0)/1000 .. 's')   
     gpio.mode(pins.IO4, gpio.INPUT)
     ftr.sleep(30)
