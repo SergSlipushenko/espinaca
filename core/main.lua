@@ -2,8 +2,8 @@ print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n'
 local now = tmr.now
 local _start = now()
 timeit = function() return (now()-_start)/1000 end
-local ftr=require('futures')
-local main_cfg = dofile('config.lua').main
+ftr=require('futures')
+local main_cfg = dofile('main_cfg.lua')
 wificon = nil; mq = nil
 local net_conn = function(when_connected)
     if wifi and main_cfg.wifi then
@@ -11,36 +11,23 @@ local net_conn = function(when_connected)
         local ft_wifi = ftr.Future()
         wificon:start(ft_wifi:callbk())
         ft_wifi:wait()
-        if mqtt and main_cfg.mqtt then
+        if main_cfg.sntp and sntp and rtctime then
+            local ft_sync = ftr.Future()           
+            sntp.sync('0.ua.pool.ntp.org', ft_sync:callbk(),ft_sync:callbk(true))
+            if ft_sync:wait() then 
+                local sec,usec = ft_sync:result()
+                print('Time is :', sec)
+                rtctime.set(sec, usec)
+            else print('Time sync failed! Reason ', ft_sync:result()) end
+        end
+        if main_cfg.mqtt and mqtt then
             mq = require('mqttcon')
             local ft_mq = ftr.Future()
             mq:start(ft_mq:callbk())
             ft_mq:wait()
             if main_cfg.console then
-                local connected = false
-                local node_name = string.format('NODE-%x', node.chipid()):upper()
-                mq:subscribe('node/'..node_name..'/stdin', 0, function(msg)
-                    if connected and msg == ':q!' then 
-                        connected = false
-                        node.output(nil)
-                        return
-                    end
-                    if not connected then 
-                        connected = true
-                        node.output(function(msg) 
-                            if mq.running then
-                                mq:publish('node/'..node_name..'/stdout', msg)
-                            end
-                        end, 1)       
-                    end
-                    if connected then
-                        mq:publish('node/'..node_name..'/stdout', msg) 
-                        node.input(msg) 
-                    end
-                end)
+                dofile('mqconsole.lua')
             end
-        else
-            print('mqtt disabled')
         end
     else
         wifi.setmode(wifi.NULLMODE)

@@ -18,21 +18,25 @@ used was runned with future.spawn.
 local Future = function()
     -- IMPORTANT: Futures with timeout CAN NOT be reused due to prevent side effects
     return {
-        callbk = function(self)
+        _callbk = function(self, success)
             self.co = coroutine.running()
             self._result = nil
             self.done = false
             self.pending = true
-            if self.tmr and (self.tmr:state() ~= nil) then
+            self.success = nil
+            if self.tmr and (self.tmr:state() == false) then
                 self.tmr:start()
             end
             return function(...)
+                self.success = success
                 if self.tmr and (self.tmr:state() ~= nil) then 
                     self.tmr:unregister() 
                 end
                 self:resolve(unpack(arg))
             end
         end,
+        callbk = function(self) return self:_callbk(true) end,
+        errcallbk = function(self) return self:_callbk() end,
         resolve = function(self, ...)
             if not(self.done) then
                 self._result = arg
@@ -54,6 +58,7 @@ local Future = function()
         wait = function(self)
             if not(self.pending) then error('Callback not set') end
             coroutine.yield()
+            return self.success
         end,        
         result = function(self)
             if not self.done then self:wait() end

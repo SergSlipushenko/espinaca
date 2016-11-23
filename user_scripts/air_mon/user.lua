@@ -13,7 +13,7 @@ function run()
     ftr.sleep(30)
     res = bme280.init(pins.IO5,pins.IO0)
     ftr.sleep(100)
-    if not res then print('BМE280 faild to init'); return end
+    if not res then print('BМE280 failed to init'); return end
     press, temp=bme280.baro()
     hum,_=bme280.humi()
     heap = tostring(node.heap())
@@ -38,10 +38,12 @@ function run()
         wificon:stop()
     end
     print('job done in '..(timeit())..' ms')
-    print('go down for '.. (cfg.sleep_cycle or 0)/1000 .. 's')   
     gpio.mode(pins.IO4, gpio.INPUT)
     ftr.sleep(30)
     gpio.mode(pins.IO15, gpio.INPUT)
-    ftr.sleep(30)
-    rtctime.dsleep(cfg.sleep_cycle*1000)
+    if cfg.sleep_on_done then
+        print('go down for '.. (cfg.sleep_cycle or 0)/1000 .. 's')   
+        ftr.sleep(30)        
+        rtctime.dsleep(cfg.sleep_cycle*1000)
+    end
 end
