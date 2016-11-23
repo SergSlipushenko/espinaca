@@ -4,6 +4,7 @@ local _start = now()
 timeit = function() return (now()-_start)/1000 end
 local ftr=require('futures')
 local main_cfg = dofile('config.lua').main
+wificon = nil; mq = nil
 local net_conn = function(when_connected)
     if wifi and main_cfg.wifi then
         wificon = require('wificon')
