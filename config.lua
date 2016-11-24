@@ -1,11 +1,4 @@
 return {
-    main = {
-        wifi = true,
-        sntp = true,
-        wait_for_net = true,
-        mqtt = true,
-        console = true   
-    },
     warmup_time = 35000,
     verbose = true,
     send = true,

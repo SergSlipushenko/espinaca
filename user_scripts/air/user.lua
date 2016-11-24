@@ -1,19 +1,17 @@
--- Application example
-ftr = require 'futures'
-cfg = dofile 'config.lua'
-mhz19 = require 'mhz19'
-pins = require 'pins'
-dsp = require 'pcd8544'
+return function()
+    ftr = require 'futures'
+    cfg = dofile 'config.lua'
+    mhz19 = require 'mhz19'
+    pins = require 'pins'
+    dsp = require 'pcd8544'
+    
+    mhz19:init(cfg.mhz19_pin)
+    gpio.mode(pins.IO2, gpio.OUTPUT)
+    gpio.write(pins.IO2, 0)
+    bme280.init(pins.IO0,pins.IO5)
+    dsp:init()
+    URL = 'http://api.thingspeak.com/update?api_key=%s&field1=%d&field2=%d&field3=%d&field4=%d&field5=%d'
 
-mhz19:init(cfg.mhz19_pin)
-gpio.mode(pins.IO2, gpio.OUTPUT)
-gpio.write(pins.IO2, 0)
-bme280.init(pins.IO0,pins.IO5)
-dsp:init()
-URL = 'http://api.thingspeak.com/update?api_key=%s&field1=%d&field2=%d&field3=%d&field4=%d&field5=%d'
-secrets = dofile 'secrets.lua'
-
-function run()
     if cfg.warmup_time then
         local counter = cfg.warmup_time
         while counter > 0 do
@@ -27,8 +25,7 @@ function run()
         end
     end
     while true do
-        ft = ftr.Future()
-        ft:timeout(3000)
+        ft = ftr.Future():timeout(3000)
         mhz19:get_co2_level(ft:callbk())
         local ppm = ft:result()
         if ppm then
@@ -42,16 +39,17 @@ function run()
                 print(ppm, temp,hum,press,heap)
             end
             if cfg.send then
-                url=URL:format(secrets.TS.api_key,ppm, temp,hum,press,heap)
+                local url=URL:format(secrets.TS.api_key,ppm, temp,hum,press,heap)
+                print(url)
                 http.get(url, nil, function(c,d) print(c) end)
             end
-            if mq and mq.running then
-                mq:publish('sensors/airstation/co2', tostring(ppm))
-                mq:publish('sensors/airstation/temp', tostring(temp))
-                mq:publish('sensors/airstation/hum', tostring(hum))
-                mq:publish('sensors/airstation/press', tostring(press))
-                mq:publish('sensors/airstation/heap', tostring(heap))
-            end            
+--            if mq and mq.running then
+--                mq:publish('sensors/airstation/co2', tostring(ppm))
+--                mq:publish('sensors/airstation/temp', tostring(temp))
+--                mq:publish('sensors/airstation/hum', tostring(hum))
+--                mq:publish('sensors/airstation/press', tostring(press))
+--                mq:publish('sensors/airstation/heap', tostring(heap))
+--            end            
         end
         gpio.serout(pins.IO2,gpio.LOW,{50000,100000},3, function() end)
         ftr.sleep(cfg.cycle)

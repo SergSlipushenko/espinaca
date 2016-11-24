@@ -1,9 +1,8 @@
-pins = require 'pins'
-ftr = require 'futures'
-URL = 'http://api.thingspeak.com/update?api_key=%s&field1=%s&field2=%s&field3=%s&field4=%s&field5=%s'
-secrets = dofile 'secrets.lua'
-
-function run()
+return function()
+    pins = require 'pins'
+    ftr = require 'futures'
+    URL = 'http://api.thingspeak.com/update?api_key=%s&field1=%s&field2=%s&field3=%s&field4=%s&field5=%s'
+    secrets = dofile 'secrets.lua'
     cfg = dofile('config.lua')
     gpio.mode(pins.IO15, gpio.OUTPUT)
     gpio.write(pins.IO15,gpio.LOW)

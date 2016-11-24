@@ -1,20 +1,3 @@
---[[
-The module introduces cooperative ``multithreading`` for Nodemcu platform.
-It works on top of callbacks and reuses system scheduler. Basically, it is
-nothing more then converter callbacks to async/await-like interface. With this
-module it is possible to do not-blocking sleeps `futures.sleep(1000)` and run 
-a few io-waiting jobs in parallel:
-`futures.spawn(dns_resovle); futures.spawn(send_http_req)`
-
-Future class represents asynchronously getting data. Instead of callbacks
-it allows to get async result in the same thread without blocking of internal 
-system processes. Future.callbk set up callback function for retriving data 
-and then Future.result waits for this callback and returns retrieved data from 
-callback call.
-IMPORTANT NOTE: Future.result will work properly only if function where it was
-used was runned with future.spawn.
-]]
-
 local Future = function()
     -- IMPORTANT: Futures with timeout CAN NOT be reused due to prevent side effects
     return {
@@ -30,7 +13,7 @@ local Future = function()
             return function(...)
                 self.success = success
                 if self.tmr and (self.tmr:state() ~= nil) then 
-                    self.tmr:unregister() 
+                    self.tmr:unregister()
                 end
                 self:resolve(unpack(arg))
             end
@@ -65,20 +48,29 @@ local Future = function()
             if self._result then 
                 return unpack(self._result) 
             end
+        end,
+        run = function(self, f, ...)
+            f(unpack(arg))
+            return self:result()
         end
     }
 end
 
 return {
-    spawn = function(f)
+    spawn = function(f, ...)
         node.task.post(function() 
-            coroutine.wrap(f)() 
+            coroutine.wrap(function() f(unpack(arg)) end)() 
         end)
     end,
     sleep = function(ms)
         local tt = tmr.create()
         local ff = Future()
-        tt:alarm(ms,tmr.ALARM_SINGLE, ff:callbk())
+        ff:run(tt.alarm, tt, ms,tmr.ALARM_SINGLE, ff:callbk())
+    end,
+    switch = function()
+        local ff = Future()
+        local _callbk = ff:callbk()
+        node.task.post(_callbk)
         ff:wait()
     end,
     Future = Future

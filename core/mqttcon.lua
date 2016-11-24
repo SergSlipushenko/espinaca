@@ -1,32 +1,28 @@
-local ftr=require('futures')
+require 'utils'
 local node_name = string.format('NODE-%x', node.chipid()):upper()
-local ftoff = ftr.Future()
 local routes = {}
-local dispatch = function(client, topic, message)
+local dispatch = function(_, topic, message)
     if routes[topic] then routes[topic].handler(message) end
 end
-
 return {
     node_name=node_name,
     routes = routes,
     running = false,
     _start = function(self, on_connect)
-        local secrets = dofile('secrets.lua')
-        local m = mqtt.Client(node_name, 120, secrets.MQTT.user, secrets.MQTT.pass)
-        self.mq_client = m
+        self.ftoff = ftr.Future()
+        local MQTT = dofile('secrets.lua').MQTT
+        local m = mqtt.Client(node_name, 120, MQTT.user, MQTT.pass)
+        self.client = m
         local ff = ftr.Future()
-        print('Try to connect to MQTT server ' .. secrets.MQTT.server)
+        print('Try to connect to MQTT server ' .. MQTT.server)
         while self.running do
             ftr.sleep(200)
-            ft = ftr.Future()
+            local ft = ftr.Future()
             ft:timeout(20000)
             m:close()            
             ftr.sleep(200)
-            m:connect(secrets.MQTT.server, secrets.MQTT.port, 0, ft:callbk(), ft:callbk())
-            local cl, reason = ft:result()
-            if reason then
-                print('failed to connect to MQTT. Reason: ' .. reason)
-            elseif cl then
+            m:connect(MQTT.server, MQTT.port, 0, ft:callbk(), ft:errcallbk())
+            if ft:wait() then
                 print('connected to MQTT as ' .. node_name)
                 for topic,v in pairs(routes) do
                     if m:subscribe(topic, v.qos, ff:callbk()) then
@@ -36,13 +32,14 @@ return {
                 end
                 m:on('message', dispatch)
                 if on_connect then on_connect(); on_connect = nil end
-                m:on('offline', ftoff:callbk())
-                ftoff:result()
+                m:on('offline', self.ftoff:callbk())
+                self.ftoff:wait()
                 print('MQTT connection went offline.')
             else
-                print('failed to connect to MQTT. Reason: timeout')
+                local _, reason = ft:result()
+                if reason then print('failed to connect to MQTT. Reason: ' .. reason)
+                else print('failed to connect to MQTT. Reason: timeout') end                    
             end
-            ft = nil
             if self.running then print('reconnect...') end
         end
         print('mqtt stopped')
@@ -63,15 +60,15 @@ return {
         routes[topic] = nil
         self:close_connection()
     end,
-    publish = function(self,topic, payload)
-        if not self.mq_client then return end
-        self.mq_client:publish(topic, payload, qos or 0, retain or 0)
+    publish = function(self,topic, payload, qos, retain)
+        if not self.client then return end
+        local ft = ftr.Future()
+        ft:run(self.client.publish, self.client, topic, payload, qos or 0, retain or 0, ft:callbk())
     end,
     close_connection = function(self)
-        if not self.mq_client then return end
-        if ftoff.pending then 
-            self.mq_client:close()
-            ftoff:resolve()
+        if self.client and ftoff.pending then 
+            self.client:close()
+            self.ftoff:resolve()
         end    
     end
 }
