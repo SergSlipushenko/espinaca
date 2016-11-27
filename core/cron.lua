@@ -8,21 +8,19 @@ local do_cycle = function(cron, cfg)
     local services = {}
     for _, job in ipairs(cron) do
         if iter % job.every == 0 then
-            print(job.job)
-            if job.wifi then services.wifi = true; print 'wifi' end
-            if job.mqtt then services.mqtt = true; print 'mqtt' end
-            print('----')
+            print(string.format('Job: %s Services: %s %s', job.job, job.wifi and 'wifi,' or '', job.mqtt and 'mqtt' or '')) 
+            if job.wifi then services.wifi = true end
+            if job.mqtt then services.mqtt = true end
         end
     end
     if next(services) ~= nil then
         net_con = require 'netcon'
         net_con.start(services)
-        print 'done'
     end
     for _, job in ipairs(cron) do
         if iter % job.every == 0 then
-            print(job.job)
             if file.exists(job.job..'.lua') then
+                print('Executed: ', job.job..'.lua')
                 dofile(job.job..'.lua')()
                 ftr.switch()
             else print(job.job..'.lua not found') end
@@ -38,9 +36,9 @@ local do_cycle = function(cron, cfg)
 end
 return function()
     local crontab
-    crontab = loadfile('crontab.lua')
+    crontab = ldfile('crontab.lua')
     if not crontab then print('no crontab.lua'); return end
-    local cfg = (loadfile('main_cfg.lua') or {}).cron or {}
+    local cfg = (ldfile('main_cfg.lua') or {}).cron or {}
     do_cycle(crontab, cfg)
     if not cfg.dsleep then
         cron_tmr = tmr.create()

@@ -30,8 +30,12 @@ end
 return {
     running = false,
     start = function(self, on_connect)
+        if self.running and on_connect then 
+            node.task.post(on_connect)
+            return 
+        end
         if not file.exists('secrets.lua') then return end
-        local APS = loadfile('secrets.lua').APS
+        local APS = (ldfile('secrets.lua') or {}).APS
         if self.running or not(APS) then return end
         self.running = true
         ftr.spawn(function()
@@ -39,8 +43,8 @@ return {
                 if not wifi.sta.getrssi() then
                     print('connection lost.')
                     wifi_connect(APS)
-                end
-                if wifi.sta.getrssi() and on_connect then
+                    on_connect(); on_connect = nil
+                elseif on_connect then
                     on_connect(); on_connect = nil
                 end
                 ftr.sleep(7000)

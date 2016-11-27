@@ -1,9 +1,9 @@
 return {
     sntp_server = '0.ua.pool.ntp.org',
     on_boot = {
-        ntp_sync = false,
-        net = {wifi = false, mqtt = false},
-        script = 'dumb.lua',
+        ntp_sync = true,
+        net = {wifi=true, mqtt=true},
+        script = 'dumb',
     },
     cron = {
         cron_cycle = 10000,

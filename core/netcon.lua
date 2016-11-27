@@ -1,22 +1,21 @@
 require 'utils'
 wificon = nil
 mq = nil
-local start = function(services, when_connected)
+local start = function(services)
     if services.wifi and wifi then
-        wificon = loadfile('wificon.lua', wificon)
+        wificon = ldfile('wificon.lua', wificon)
         if not wificon.running then 
             local ft_wifi = ftr.Future()
             ft_wifi:run(wificon.start, wificon, ft_wifi:callbk())
         end
         if services.mqtt and mqtt then
-            mq = loadfile('mqttcon', mq)
+            mq = ldfile('mqttcon.lua', mq)
             if not mq.running then
                 local ft_mq = ftr.Future()
                 ft_mq:run(mq.start, mq, ft_mq:callbk())
             end
         end
     end
-    if when_connected then node.task.post(when_connected) end
 end
 local stop = function()
     if mq then mq:stop(); ftr.switch(); mq = nil end
