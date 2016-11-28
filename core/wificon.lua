@@ -53,6 +53,7 @@ return {
     end,
     stop = function(self)
         wifi.sta.disconnect()
+        wifi.setmode(wifi.NULLMODE)        
         self.running = false
         print 'wifi disconnected'
     end

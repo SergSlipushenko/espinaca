@@ -1,6 +1,4 @@
-local now = tmr.now
-local _start = now()
-timeit = function() return (now()-_start)/1000 end
+wifi.setmode(wifi.NULLMODE)
 if rtcfifo then rtcfifo.prepare() end
 _heap = node.heap()
 ftr = require 'futures'

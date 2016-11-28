@@ -1,7 +1,8 @@
 print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n';
 require 'utils'
-ftr.spawn(function() 
-    if rtctime == nil or rtctime.get() == 0 then
+ftr.spawn(function()
+    local _, bootr = node.bootreason()
+    if (bootr ~= 5) or (bootr == 6 and rtctime and rtctime.get() == 0) then
         local cfg = ldfile('main_cfg.lua')
         local on_boot = (cfg or {}).on_boot or {}
         local iter_cell = ((cfg or {}).cron or {}).iter_cell

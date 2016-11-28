@@ -1,10 +1,8 @@
 return {
-    warmup_time = 35000,
+--    warmup_time = 35000,
     verbose = true,
     send = true,
     cycle = 15000,
-    sleep_cycle = 15000,
-    sleep_on_done = false,
     mhz19_pin = 2,
     base_font = u8g.font_10x20,
     mid_font = u8g.font_7x15,

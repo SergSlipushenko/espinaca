@@ -30,8 +30,7 @@ local do_cycle = function(cron, cfg)
     cycle_done = true
     if cfg.dsleep then 
         print('cycle ran in '..(timeit())..' ms')
-        ftr.sleep(10)
-        rtctime.dsleep_aligned(cfg.cron_cycle*1000,100000) 
+        node.dsleep((cfg.cron_cycle-timeit()%cfg.cron_cycle)*1000,4)
     end
 end
 return function()
