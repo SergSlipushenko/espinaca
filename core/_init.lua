@@ -5,5 +5,5 @@ local _go = function()
     local ok, err = go(); if not(ok) then print(err) end end
 local _, r = node.bootreason(); 
 if (r == 5) or (r == 6 and rtctime and rtctime.get() ~= 0) then go()
-elseif (rtcfifo and rtcfifo.ready() == 0) then _go()
+elseif (r == 6 and rtcfifo and rtcfifo.ready() == 0) then _go()
 else local tt =tmr.create(); tt:alarm(5000, tmr.ALARM_SINGLE, _go) end
