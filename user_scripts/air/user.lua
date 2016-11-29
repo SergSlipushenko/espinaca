@@ -4,38 +4,36 @@ return function()
     mhz19 = require 'mhz19'
     pins = require 'pins'
     dsp = require 'pcd8544'
+    htu = require 'htu21d'
     
     mhz19:init(cfg.mhz19_pin)
     gpio.mode(pins.IO2, gpio.OUTPUT)
     gpio.write(pins.IO2, 0)
-    bme280.init(pins.IO0,pins.IO5)
+    local sensor = nil
+    if bme280.init(pins.IO0,pins.IO5) then sensor = 'bme'
+    elseif htu:init(64, pins.IO0,pins.IO5) then sensor = 'htu' end
     dsp:init()
     URL = 'http://api.thingspeak.com/update?api_key=%s&field1=%d&field2=%d&field3=%d&field4=%d&field5=%d'
-    if cfg.warmup_time then
-        local counter = cfg.warmup_time
-        while counter > 0 do
-            local delay = (counter>10000 and 10000 or counter)
-            ftr.sleep(delay)
-            gpio.serout(pins.IO2,gpio.LOW,{50000,100000},counter/10000, function() end)
-            dsp:draw(function(d)
-                d:drawStr(0,0,tostring(counter/1000))
-            end)
-            counter = counter - delay
-        end
-    end
     while true do
         ft = ftr.Future():timeout(3000)
         mhz19:get_co2_level(ft:callbk())
         local ppm = ft:result()
         if ppm then
-            local press, temp=bme280.baro()
-            local hum,_=bme280.humi()
-            local heap = node.heap()
+            local press,temp,hum
+            if sensor == 'bme' then
+                press, temp=bme280.baro()
+                hum,_=bme280.humi()
+            elseif sensor == 'htu' then
+                temp=htu:temp()
+                press = 0
+                hum = htu:hum()
+            end            
+            local heap = node.heap()          
             press = press/10 - 101325
             temp = temp/10
             hum = hum/100
             dsp:draw(function(d)
-                if timeit()/1000 < 60 then d:drawStr(0,0,'CO2:****')
+                if timeit()/1000 < 120 then d:drawStr(0,0,'CO2:****')
                 else d:drawStr(0,0,'CO2:'..ppm) end
                 d:drawStr(0,16,'T: '..temp/10 .. '.' .. temp%10 .. 'C')
                 d:drawStr(0,32,'H: '..hum/10 .. '.' .. hum%10 .. '%')                
