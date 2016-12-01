@@ -23,20 +23,20 @@ return function()
             if sensor == 'bme' then
                 press, temp=bme280.baro()
                 hum,_=bme280.humi()
+                hum = hum/1000
+                press = press/10 - 101325                
             elseif sensor == 'htu' then
                 temp=htu:temp()
                 press = 0
                 hum = htu:hum()
             end            
             local heap = node.heap()          
-            press = press/10 - 101325
             temp = temp/10
-            hum = hum/100
             dsp:draw(function(d)
                 if timeit()/1000 < 120 then d:drawStr(0,0,'CO2:****')
                 else d:drawStr(0,0,'CO2:'..ppm) end
                 d:drawStr(0,16,'T: '..temp/10 .. '.' .. temp%10 .. 'C')
-                d:drawStr(0,32,'H: '..hum/10 .. '.' .. hum%10 .. '%')                
+                d:drawStr(0,32,'H: '.. hum .. '%')                
             end)
             if cfg.verbose then
                 print(ppm, temp,hum,press,heap)
