@@ -7,3 +7,4 @@ ldfile = function(fname, m)
     else if file.exists(fname) then return dofile(fname) end end 
 end
 pheap = function() print(_heap - node.heap()); _heap = node.heap() end
+f_stub = function() end

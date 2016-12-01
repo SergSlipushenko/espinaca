@@ -1,6 +1,7 @@
 require 'utils'
-local wifi_connect=function(aps)
-    if not aps then aps = dofile('secrets.lua').APS end
+local APS = (ldfile('secrets.lua') or {}).APS
+local connect=function(self, aps)
+    if not aps then aps = APS end
     wifi.setmode(wifi.STATION)
     wifi.setphymode(wifi.PHYMODE_N)
     local ft_list = ftr.Future()
@@ -13,9 +14,8 @@ local wifi_connect=function(aps)
             local ft = ftr.Future():timeout(10000)
             wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, ft:callbk())
             wifi.sta.connect()
-            local cdata = ft:result()
-            if cdata then
-                print('connected as '..cdata.IP)
+            if ft:wait() then
+                print('connected as '..ft:result().IP)
                 wifi.eventmon.unregister(wifi.eventmon.STA_GOT_IP)
                 return true
             else
@@ -29,32 +29,38 @@ end
 
 return {
     running = false,
+    connect = connect,
     start = function(self, on_connect)
-        if self.running and on_connect then 
-            node.task.post(on_connect)
+        if self.running then 
+            if on_connect then
+                node.task.post(function() on_connect(); on_connect = nil end)
+            end
             return 
         end
-        if not file.exists('secrets.lua') then return end
-        local APS = (ldfile('secrets.lua') or {}).APS
-        if self.running or not(APS) then return end
         self.running = true
         ftr.spawn(function()
+            local tt = tmr.create()
+            self.ftoff = ftr.Future()
             while self.running do
-                if not wifi.sta.getrssi() then
-                    print('connection lost.')
-                    wifi_connect(APS)
-                    on_connect(); on_connect = nil
-                elseif on_connect then
-                    on_connect(); on_connect = nil
+                if wifi.sta.getrssi() then
+                    if on_connect() then on_connect(); on_connect = nil end
+                else
+                    print('No wifi connection')
+                    if self:connect() then
+                        if on_connect() then on_connect(); on_connect = nil end
+                    end
                 end
-                ftr.sleep(7000)
+                tt.alarm(7000, tmr.ALARM_SINGLE, self.ftoff:callbk())
+                self.ftoff:wait()
             end
         end)
     end,
     stop = function(self)
+        self.running = false
+        if self.ftoff then self.ftoff:resolve() end
+        ftr.switch()
         wifi.sta.disconnect()
         wifi.setmode(wifi.NULLMODE)        
-        self.running = false
         print 'wifi disconnected'
     end
 }

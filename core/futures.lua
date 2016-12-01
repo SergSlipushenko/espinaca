@@ -18,8 +18,8 @@ local Future = function()
                 self:resolve(unpack(arg))
             end
         end,
-        callbk = function(self) return self:_callbk(true) end,
-        errcallbk = function(self) return self:_callbk() end,
+        callbk = function(self) self._fcallbk = self:_callbk(true) return self._fcallbk end,
+        errcallbk = function(self) self._ferrcallbk = self:_callbk() return self._ferrcallbk end,
         resolve = function(self, ...)
             if not(self.done) then
                 self._result = arg
@@ -41,6 +41,9 @@ local Future = function()
         wait = function(self)
             if not(self.pending) then error('Callback not set') end
             coroutine.yield()
+            self._fcallbk = nil
+            self._ferrcallbk = nil
+            self.co = nil
             return self.success
         end,        
         result = function(self)
@@ -66,6 +69,7 @@ return {
         local tt = tmr.create()
         local ff = Future()
         ff:run(tt.alarm, tt, ms,tmr.ALARM_SINGLE, ff:callbk())
+        return ff
     end,
     switch = function()
         local ff = Future()
