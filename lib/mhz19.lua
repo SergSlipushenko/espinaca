@@ -13,7 +13,7 @@ return {
                 local _end = tmr.now() 
                 local ppm=(_end - self._start - 2000)*5/1000
                 self._start=-1
-                node.task.post(function() on_done(ppm) end)
+                node.task.post(function() on_done(ppm); on_done=nil end)
             end
         end) 
     end

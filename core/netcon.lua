@@ -3,6 +3,7 @@ local nt = {
     mqtt = nil
 }
 local deploy = function(services)
+    if services == nil then return end
     if services.wifi or services.mqtt then
         if not nt.wifi then nt.wifi = ldfile('wificon.lua', wificon) end
         if not nt.wifi.running then 

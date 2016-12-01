@@ -4,7 +4,7 @@ nt = require 'netcon'
 local cycle_done = true
 local do_cycle = function(cron, cfg)
     if not cycle_done then print 'Cycle skipped'; return end
-    cycle_done = false
+    cycle_done = false  
     local iter=rtcmem.read32(cfg.iter_cell)
     rtcmem.write32(cfg.iter_cell,iter+1)
     print('Cycle : ', iter) 
@@ -26,30 +26,31 @@ end
 
 ftr.spawn(function()
     local _, bootr = node.bootreason()
+    local cfg = ldfile('main_cfg.lua') or {}
+    local on_boot = cfg.on_boot or {}
+    local croncfg = cfg.cron or {}
+    cfg = nil
     if (bootr ~= 5) or (bootr == 6 and rtctime and rtctime.get() == 0) then
-        local cfg = ldfile('main_cfg.lua')
-        local on_boot = (cfg or {}).on_boot or {}
-        local iter_cell = ((cfg or {}).cron or {}).iter_cell
-        cfg = nil 
-        if rtcmem then rtcmem.write32(iter_cell,0) end
+        if rtcmem then rtcmem.write32(croncfg.iter_cell,0) end
         iter_cell = nil
         if on_boot.ntp_sync then
-            nt_con.deploy({wifi=true})
+            nt.deploy({wifi=true})
         end
         dofile('rtc_sync.lua')()
-        local task_on_boot = ldfile((on_boot.script or '')..'.lua')
-        if task_on_boot then 
-            nt.deploy(on_boot.net or {})
-            print('Execute :', on_boot.script..'.lua')
-            task_on_boot(); ftr.switch()
-        else print('No boot script. '.. (on_boot.script or '')..'.lua not found') end
+        if on_boot.script then
+            local task_on_boot = ldfile((on_boot.script or '')..'.lua')
+            if task_on_boot then 
+                nt.deploy(on_boot.net)
+                print('Execute :', on_boot.script..'.lua')
+                task_on_boot(); ftr.switch()
+            else print(on_boot.script .. '.lua not found') end
+        else print('No boot script.') end
     end
     local crontab = ldfile('crontab.lua')
     if not crontab then print('no crontab.lua'); return end
-    local croncfg = (ldfile('main_cfg.lua') or {}).cron or {}
     do_cycle(crontab, croncfg)
-    if not cfg.dsleep then
+    if not croncfg.dsleep then
         cron_tmr = tmr.create()
-        cron_tmr:alarm(croncfg.cron_cycle, tmr.ALARM_AUTO, function() do_cycle(crontab, croncfg) end)
+        cron_tmr:alarm(croncfg.cron_cycle, tmr.ALARM_AUTO, function() ftr.spawn(do_cycle, crontab, croncfg) end)
     end        
 end)

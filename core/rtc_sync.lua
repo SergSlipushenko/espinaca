@@ -1,6 +1,6 @@
 require 'utils'
 return function()
-    if sntp and wificon and wificon.running then
+    if sntp and nt.wifi and nt.wifi.running then
         local server = ldfile('main_cfg.lua').sntp_server
         local ft_sync = ftr.Future()
         local attempt = 3
