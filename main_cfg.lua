@@ -6,7 +6,7 @@ return {
         script = 'user',
     },
     cron = {
-        cron_cycle = 15*1000,
+        cron_cycle = 10*1000,
         dsleep = true,
         iter_cell = 21
     }

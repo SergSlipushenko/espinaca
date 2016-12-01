@@ -1,5 +1,5 @@
 return {
-    {every = 1, job = 'dumb', wifi=false, mqtt=false},
-   -- {every = 5, job = 'time_sync', wifi=true, mqtt=false, sntp = true},
-   -- {every = 2, job = 'dumb', wifi=true, mqtt=false}
+    -- Script 'dumb.lua' will run every cron cycle
+    {every = 1, job = 'blink'},
+    {every = 2, job = 'mqtt_example'}
 }
