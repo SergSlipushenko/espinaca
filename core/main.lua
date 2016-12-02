@@ -44,10 +44,10 @@ ftr.spawn(function()
     if (bootr ~= 5) or (bootr == 6 and rtctime and rtctime.get() == 0) then
         if rtcmem then rtcmem.write32(croncfg.iter_cell,0) end
         iter_cell = nil
-        if on_boot.ntp_sync then
-            nt.deploy({wifi=true})
+        if on_boot.ntp_sync then nt.deploy({wifi=true}) end
+        if on_boot.ntp_sync or on_boot.ntp_sync == nil then
+            dofile('rtc_sync.lua')()
         end
-        dofile('rtc_sync.lua')()
         if on_boot.script then
             local task_on_boot = ldfile((on_boot.script or '')..'.lua')
             if task_on_boot then 
