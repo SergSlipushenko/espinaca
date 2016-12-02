@@ -8,7 +8,7 @@ return function()
             sntp.sync(server, ft_sync:callbk(),ft_sync:errcallbk())
             if ft_sync:wait() then 
                 local sec,usec = ft_sync:result()
-                print('Time is :', sec, usec)
+                print('Time synced to :', sec, usec)
                 return
             else
                 print('Time sync failed! Reason ', ft_sync:result(), 'Attempt ', attempt)
@@ -16,6 +16,8 @@ return function()
             attempt = attempt - 1
         end
     end
-    if rtctime.get() == 0 then rtctime.set(978307200, 0) end
-    print('Time is :', rtctime.get())
+    if rtctime.get() == 0 then 
+        rtctime.set(978307200, 0) 
+        print('Time is :', rtctime.get())
+    end
 end

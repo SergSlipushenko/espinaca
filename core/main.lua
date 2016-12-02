@@ -2,19 +2,29 @@ print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n'
 require 'utils'
 nt = require 'netcon'
 local cycle_done = true
+local cycles_to_skip = nil
 local do_cycle = function(cron, cfg)
-    if not cycle_done then print 'Cycle skipped'; return end
-    cycle_done = false  
+    if not cycle_done then 
+        print('Cycle skipped. Left: ', cycles_to_skip);
+        if cycles_to_skip then 
+            if cycles_to_skip == 0 then node.restart() 
+            else cycles_to_skip = cycles_to_skip - 1 end
+        end
+        return
+    end
+    cycle_done = false; cycles_to_skip=cfg.cycles_to_skip  
     local iter=rtcmem.read32(cfg.iter_cell)
     rtcmem.write32(cfg.iter_cell,iter+1)
     print('Cycle : ', iter) 
     for _, job in ipairs(cron) do
         if iter % job.every == 0 then
-            if file.exists(job.job..'.lua') then
-                print('Executed: ', job.job..'.lua')
-                dofile(job.job..'.lua')()
-                ftr.switch()
-            else print(job.job..'.lua not found') end
+            local jobfile = job.job..'.lua'
+            if file.exists(jobfile) then
+                print('Executed: ', jobfile)
+                local jobrun = dofile(job.job..'.lua')
+                if job.spawn then ftr.spawn(jobrun)
+                else jobrun(); ftr.switch() end
+            else print(jobfile..'.lua not found') end
         end
     end
     cycle_done = true
@@ -29,6 +39,7 @@ ftr.spawn(function()
     local cfg = ldfile('main_cfg.lua') or {}
     local on_boot = cfg.on_boot or {}
     local croncfg = cfg.cron or {}
+    local crontab = cfg.crontab
     cfg = nil
     if (bootr ~= 5) or (bootr == 6 and rtctime and rtctime.get() == 0) then
         if rtcmem then rtcmem.write32(croncfg.iter_cell,0) end
@@ -46,11 +57,11 @@ ftr.spawn(function()
             else print(on_boot.script .. '.lua not found') end
         else print('No boot script.') end
     end
-    local crontab = ldfile('crontab.lua')
-    if not crontab then print('no crontab.lua'); return end
+    if not crontab then crontab = ldfile('crontab.lua') end
+    if not crontab then print('no crontab'); return end
     do_cycle(crontab, croncfg)
     if not croncfg.dsleep then
         cron_tmr = tmr.create()
         cron_tmr:alarm(croncfg.cron_cycle, tmr.ALARM_AUTO, function() ftr.spawn(do_cycle, crontab, croncfg) end)
-    end        
+    end
 end)

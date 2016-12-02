@@ -3,6 +3,10 @@ return function()
     pins = require 'pins'
     dsp = require 'pcd8544'
     htu = require 'htu21d'
+    cfg = {
+        warmtime = 10,
+        timezone = 2,
+        timefmt = '%02d:%02d:%02d'}
     mhz19:init(pins.IO4)
     gpio.mode(pins.IO2, gpio.OUTPUT)
     gpio.write(pins.IO2, 1)
