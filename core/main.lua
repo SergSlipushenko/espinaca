@@ -22,7 +22,7 @@ local do_cycle = function(cron, cfg)
             if file.exists(jobfile) then
                 print('Executed: ', jobfile)
                 local jobrun = dofile(job.job..'.lua')
-                if job.spawn then ftr.spawn(jobrun)
+                if job.async then ftr.spawn(jobrun)
                 else jobrun(); ftr.switch() end
             else print(jobfile..'.lua not found') end
         end

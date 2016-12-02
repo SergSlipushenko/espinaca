@@ -1,5 +1,5 @@
 return {
-    sntp_server = '0.ua.pool.ntp.org',
+    sntp_server = '172.20.0.1',
     on_boot = {
         ntp_sync = true,
         script = 'boot'
@@ -13,7 +13,7 @@ return {
     crontab = {
         {every = 5, job = 'sensors'},
         {every = 1, job = 'clock'},
-        {every = 30, job = 'sendTS', spawn=true},
-        {every = 3600, job ='rtc_sync', spawn=true}
+        {every = 30, job = 'sendTS', async=true},
+        {every = 3600, job ='rtc_sync', async=true}
     }    
 }
