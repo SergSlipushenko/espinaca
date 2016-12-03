@@ -1,7 +1,7 @@
 return {
-    init = function(self, cs, dc, res)
+    init = function(self, pins)
         spi.setup(1, spi.MASTER, spi.CPOL_LOW, spi.CPHA_LOW, 8, 16, spi.FULLDUPLEX)
-        self.disp = u8g.pcd8544_84x48_hw_spi(_cs or 8, _dc or 6, _res)
+        self.disp = u8g.pcd8544_84x48_hw_spi(pins.cs or 8, pins.dc or 6, pins.res)
         self:set_font()
     end,
 
