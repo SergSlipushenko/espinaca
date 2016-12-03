@@ -1,5 +1,5 @@
 return function()
-    if timeit()/1000 > cfg.warmtime then 
+    if n_cycle >= cfg.warmcycles then 
         ft = ftr.Future():timeout(2000)
         mhz19:get_co2_level(ft:callbk())
         ppm = ft:result()
@@ -18,6 +18,6 @@ return function()
         hum = htu:hum()
     end             
     heap = node.heap()
-    print(ppm,temp,hum,press,heap)
+    print(ppm,temp,hum,press,heap) 
     gpio.serout(pins.IO2,gpio.LOW,{5000,200000},3, function() end)
 end

@@ -4,7 +4,7 @@ return function()
     dsp = require 'pcd8544'
     htu = require 'htu21d'
     cfg = {
-        warmtime = 180,
+        warmcycles = 180000/ldfile('main_cfg.lua').cron.cycle,
         timezone = 2,
         timefmt = '%02d:%02d:%02d'}
     mhz19:init(pins.IO4)
@@ -15,5 +15,7 @@ return function()
     elseif htu:init(64, pins.IO0,pins.IO5) then sensor = 'htu' end
     print('Detected sensor: ', sensor) 
     dsp:init()
+    nt.deploy({wifi=true})
+    dofile('rtc_sync.lua')()
     URL = 'http://api.thingspeak.com/update?api_key=%s&field1=%d&field2=%d&field3=%d&field4=%d&field5=%d'
 end

@@ -1,6 +1,7 @@
 print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n';
 require 'utils'
 nt = require 'netcon'
+n_cycle = 0
 local cycle_done = true
 local cycles_to_skip = nil
 local do_cycle = function(cron, cfg)
@@ -12,12 +13,12 @@ local do_cycle = function(cron, cfg)
         end
         return
     end
-    cycle_done = false; cycles_to_skip=cfg.cycles_to_skip  
-    local iter=rtcmem.read32(cfg.iter_cell)
-    rtcmem.write32(cfg.iter_cell,iter+1)
-    print('Cycle : ', iter) 
+    cycle_done = false; cycles_to_skip=cfg.cycles_to_skip
+    n_cycle = rtcmem.read32(cfg.cycle_cell) 
+    rtcmem.write32(cfg.cycle_cell,n_cycle + 1)
+    print('Cycle : ', n_cycle) 
     for _, job in ipairs(cron) do
-        if iter % job.every == 0 then
+        if n_cycle % job.every == 0 then
             local jobfile = job.job..'.lua'
             if file.exists(jobfile) then
                 print('Executed: ', jobfile)
@@ -30,7 +31,7 @@ local do_cycle = function(cron, cfg)
     cycle_done = true
     if cfg.dsleep then 
         print('cycle ran in '..(timeit())..' ms')
-        node.dsleep((cfg.cron_cycle-timeit()%cfg.cron_cycle)*1000,4)
+        node.dsleep((cfg.cycle-timeit()%cfg.cycle)*1000,4)
     end
 end
 
@@ -42,8 +43,6 @@ ftr.spawn(function()
     local crontab = cfg.crontab
     cfg = nil
     if (bootr ~= 5) or (bootr == 6 and rtctime and rtctime.get() == 0) then
-        if rtcmem then rtcmem.write32(croncfg.iter_cell,0) end
-        iter_cell = nil
         if on_boot.ntp_sync then nt.deploy({wifi=true}) end
         if on_boot.ntp_sync or on_boot.ntp_sync == nil then
             dofile('rtc_sync.lua')()
@@ -62,6 +61,6 @@ ftr.spawn(function()
     do_cycle(crontab, croncfg)
     if not croncfg.dsleep then
         cron_tmr = tmr.create()
-        cron_tmr:alarm(croncfg.cron_cycle, tmr.ALARM_AUTO, function() ftr.spawn(do_cycle, crontab, croncfg) end)
+        cron_tmr:alarm(croncfg.cycle, tmr.ALARM_AUTO, function() ftr.spawn(do_cycle, crontab, croncfg) end)
     end
 end)
