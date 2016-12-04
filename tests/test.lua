@@ -1,9 +1,7 @@
-_u = require 'utils'
-
-nt = require 'netcon'
+require 'netcon'
 ftr.spawn(function()
 print(node.heap())
-nt.deploy({wifi=true ,mqtt=false})
+nt.deploy({wifi=true ,mqtt=true})
 print(node.heap())
 ftr.sleep(1000)
 print(node.heap())
@@ -23,8 +21,6 @@ ftr.spawn(function()
     m = nil
 end)
 
-_u = require 'utils'
-
 wific = require 'wificon'
 ftr.spawn(function()
 nt.deploy({mqtt=true})
@@ -42,9 +38,7 @@ print(node.heap())
 end) 
 
 
-_u = require 'utils'
-ftr = require 'futures'
-
+require 'commons'
 ftr.spawn(function()
     print(node.heap()) 
     w = dofile('wificon.lua')
@@ -77,4 +71,3 @@ m = nil
 end)
 
 m.client:connect(m.MQTT.server, m.MQTT.port, 0, function(c) print('c') end, function(c,r) print('e',r) end)
-

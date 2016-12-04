@@ -1,4 +1,4 @@
-require 'utils'
+require 'commons'
 local node_name = string.format('NODE-%x', node.chipid()):upper()
 local routes = {}
 local dispatch = function(_, topic, message)
@@ -21,7 +21,7 @@ return {
         cbk = nil
         errcbk = nil
         if ok then
-            print('connected to MQTT as ' .. node_name)
+            print(string.format('connected to %s as %s', MQTT.server, node_name))
             local ff = ftr.Future()
             for topic,v in pairs(routes) do
                 local cbk = ff:callbk()

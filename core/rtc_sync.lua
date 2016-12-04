@@ -1,4 +1,4 @@
-require 'utils'
+require 'commons'
 return function()
     if sntp and nt.wifi and nt.wifi.running then
         local ntp_server = ldfile('main_cfg.lua').sntp_server

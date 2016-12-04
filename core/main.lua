@@ -1,6 +1,6 @@
 print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n';
-require 'utils'
-nt = require 'netcon'
+require 'commons'
+wifi.setmode(wifi.NULLMODE)
 n_cycle = 0
 local cycle_done = true
 local cycles_to_skip = nil
