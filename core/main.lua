@@ -16,18 +16,26 @@ local do_cycle = function(cron, cfg)
     cycle_done = false; cycles_to_skip=cfg.cycles_to_skip
     n_cycle = rtcmem.read32(cfg.cycle_cell) 
     rtcmem.write32(cfg.cycle_cell,n_cycle + 1)
-    print('Cycle : ', n_cycle) 
+    print('Cycle : ', n_cycle)
+    async_jobs = {} 
     for _, job in ipairs(cron) do
         if n_cycle % job.every == 0 then
             local jobfile = job.job..'.lua'
             if file.exists(jobfile) then
                 print('Executed: ', jobfile)
                 local jobrun = dofile(job.job..'.lua')
-                if job.async then ftr.spawn(jobrun)
+                if job.async then
+                    async_jobs[job.job] = true
+                    ftr.spawn(function() 
+                        jobrun()
+                        async_jobs[job.job] = nil
+                        print(job.job, ' done')
+                    end)
                 else jobrun(); ftr.switch() end
             else print(jobfile..'.lua not found') end
         end
     end
+    while next(async_jobs) do print(next(async_jobs)); ftr.sleep(100) end
     cycle_done = true
     if cfg.dsleep then 
         print('cycle ran in '..(timeit())..' ms')
@@ -43,8 +51,8 @@ ftr.spawn(function()
     local crontab = cfg.crontab
     cfg = nil
     if rtcfifo then 
-        if rtcfifo.ready() == 0 and cfg.cron.cycle_cell then
-            rtcmem.write32(cfg.cron.cycle_cell, 0)
+        if rtcfifo.ready() == 0 and croncfg.cycle_cell then
+            rtcmem.write32(croncfg.cycle_cell, 0)
         end
         rtcfifo.prepare()
     end

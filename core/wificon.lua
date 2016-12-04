@@ -38,6 +38,7 @@ return {
             end
             return 
         end
+        APS = (ldfile('secrets.lua') or {}).APS
         self.running = true
         local reconnect = function()
             if self.running and not wifi.sta.getrssi() then
