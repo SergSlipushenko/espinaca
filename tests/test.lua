@@ -1,6 +1,38 @@
 _u = require 'utils'
-ftr = require 'futures'
+
 nt = require 'netcon'
+ftr.spawn(function()
+print(node.heap())
+nt.deploy({wifi=true ,mqtt=false})
+print(node.heap())
+ftr.sleep(1000)
+print(node.heap())
+end)
+
+ftr.spawn(function()
+    m = dofile('mqttcon.lua')
+    m:subscribe('t/t',0, function(msg) print(msg) end)
+    print('z')
+    f= ftr.Future()
+    f:run(m.start,m, f:callbk())
+    print('z')
+    m:publish('t/t','HIII!',0,0)
+    print(node.heap()) 
+    m:stop()
+    print('z')    
+    m = nil
+end)
+
+_u = require 'utils'
+
+wific = require 'wificon'
+ftr.spawn(function()
+nt.deploy({mqtt=true})
+end) 
+
+
+
+
 ftr.spawn(function()
 print(node.heap())
 nt.deploy({wifi=true})

@@ -42,6 +42,12 @@ ftr.spawn(function()
     local croncfg = cfg.cron or {}
     local crontab = cfg.crontab
     cfg = nil
+    if rtcfifo then 
+        if rtcfifo.ready() == 0 and cfg.cron.cycle_cell then
+            rtcmem.write32(cfg.cron.cycle_cell, 0)
+        end
+        rtcfifo.prepare()
+    end
     if (bootr ~= 5) or (bootr == 6 and rtctime and rtctime.get() == 0) then
         if on_boot.ntp_sync then nt.deploy({wifi=true}) end
         if on_boot.ntp_sync or on_boot.ntp_sync == nil then

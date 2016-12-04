@@ -31,34 +31,34 @@ return {
     running = false,
     connect = connect,
     start = function(self, on_connect)
-        if self.running then 
+        if self.running or wifi.sta.getrssi() then 
+            self.running = true
             if on_connect then
                 node.task.post(function() on_connect(); on_connect = nil end)
             end
             return 
         end
         self.running = true
-        ftr.spawn(function()
-            local tt = tmr.create()
-            self.ftoff = ftr.Future()
-            while self.running do
-                if wifi.sta.getrssi() then
-                    if on_connect() then on_connect(); on_connect = nil end
-                else
-                    print('No wifi connection')
-                    if self:connect() then
-                        if on_connect() then on_connect(); on_connect = nil end
-                    end
-                end
-                tt.alarm(7000, tmr.ALARM_SINGLE, self.ftoff:callbk())
-                self.ftoff:wait()
+        local reconnect = function()
+            if self.running and not wifi.sta.getrssi() then
+                print('No wifi connection')
+                self.running = false
+                local r = self:connect()
+                self.running = true
+                return r                
             end
-        end)
+        end
+        self.watchdog = tmr.create()
+        self.watchdog:alarm(3000, tmr.ALARM_AUTO, function() ftr.spawn(reconnect) end)
+        if reconnect() then
+            if on_connect then
+                node.task.post(function() on_connect(); on_connect = nil end)
+            end
+        end
     end,
     stop = function(self)
         self.running = false
-        if self.ftoff then self.ftoff:resolve() end
-        ftr.switch()
+        if self.watchdog then self.watchdog:unregister() end
         wifi.sta.disconnect()
         wifi.setmode(wifi.NULLMODE)        
         print 'wifi disconnected'

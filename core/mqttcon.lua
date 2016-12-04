@@ -42,32 +42,45 @@ return {
             node.task.post(function() on_connect(ok,err); on_connect = nil end)
             return 
         end
+        self.running = true
+        self:try_to_connect(on_connect)
+    end,   
+    try_to_connect = function(self, on_connect)
+        self.watchdog = tmr.create()
+        self.watchdog:alarm(1000, tmr.ALARM_AUTO, function() self:_connect(on_connect) end)
+        self:_connect(on_connect)
+    end,
+    _connect = function(self, on_connect)
+        if self.connecting then return end
         ftr.spawn(function()
-            self.running = true
-            self.ftoff = ftr.Future()
-            print('Try to connect to MQTT server ' .. MQTT.server)
-            while self.running do
-                self.client:close()            
-                ftr.sleep(200)
-                local ok, err = self:connect()
+            self.connecting = true
+            self.client:close()
+            ftr.sleep(200)
+            ok, err = self:connect()
+            if ok then
+                self.watchdog:unregister()
+                self.watchdog = nil
+                self.client:on('offline', function()
+                    self.client:on('offline', function() end)
+                    self:try_to_connect()
+                end)
                 if on_connect then on_connect(ok,err); on_connect = nil end
-                if ok then
-                    self.client:on('offline', self.ftoff:callbk())
-                    self.ftoff:wait()
-                    self.client:on('offline', f_stub)
-                    print('MQTT connection closed.')
-                else
-                    if err then print('failed to connect to MQTT. Reason: ' .. err)
-                    else print('failed to connect to MQTT. Reason: timeout') end                    
-                end
-                if self.running then print('reconnect...') end
+            else
+                if err then print('failed to connect to MQTT. Reason: ' .. err)
+                else print('failed to connect to MQTT. Reason: timeout') end                    
             end
-            print('mqtt stopped')
+            self.connecting = false
         end)
     end,
     stop = function(self)
         self.running = false
-        self:close()    
+        self.connecting = false
+        if self.watchdog then
+            self.watchdog:unregister()
+            self.watchdog = nil
+        end
+        self.client:on('offline', function() end)
+        self:close()
     end,
     subscribe = function(self, topic, qos, handler)
         routes[topic] = {handler=handler, qos=qos}
@@ -84,11 +97,10 @@ return {
         ft:run(self.client.publish, self.client, topic, payload, qos or 0, retain or 0, function() cbk() end)
     end,
     close = function(self)
-        if self.ftoff and self.ftoff.pending then 
-            self.ftoff:resolve()
-            ftr.switch()
+        if not self.connecting then
+            self.client:on('message', f_stub)
+            self.client:close()
         end
-        self.client:on('message', f_stub)
-        self.client:close()        
+        if self.running then self:try_to_connect() end
     end
 }
