@@ -7,10 +7,9 @@ return function()
     --we have to wait until blinking will finish
     for i=5,1,-1 do
         print(i)
-        do
-            local f = ftr.Future()
-            f:run(gpio.serout,pins.IO2,gpio.LOW,{30000,100000},3, f:callbk())
-        end
+        gpio.write(pins.IO2, gpio.LOW)
+        ftr.sleep(300)
+        gpio.write(pins.IO2, gpio.HIGH)
         ftr.sleep(1000)
     end
     print('VDD: ', adc.readvdd33(), 'Heap:', node.heap())

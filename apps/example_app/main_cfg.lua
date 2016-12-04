@@ -9,7 +9,7 @@ return {
         cycle_cell = 21
     },
     crontab = {
-       -- {every = 1, job = 'blink', async=true},
+        {every = 1, job = 'blink', async=true},
         {every = 1, job = 'mqtt', async=true}
     }
 }
