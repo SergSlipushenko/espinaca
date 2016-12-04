@@ -90,7 +90,8 @@ return {
         routes[topic] = nil
         self:close()
     end,
-    publish = function(self,topic, payload, qos, retain)
+    publish = function(self,topic, payload, qos, retain, async)
+        if async then self.client:publish(topic, payload, qos or 0, retain or 0);return end
         if not self.client then return end
         local ft = ftr.Future()
         local cbk = ft:callbk()
