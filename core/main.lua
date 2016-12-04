@@ -31,11 +31,14 @@ local do_cycle = function(cron, cfg)
                         async_jobs[job.job] = nil
                         print(job.job, ' done')
                     end)
-                else jobrun(); ftr.switch() end
+                else 
+                    jobrun(); ftr.switch(); 
+                    print(job.job, ' done')
+                end
             else print(jobfile..'.lua not found') end
         end
     end
-    while next(async_jobs) do print(next(async_jobs)); ftr.sleep(100) end
+    while next(async_jobs) do ftr.sleep(100) end
     cycle_done = true
     if cfg.dsleep then 
         print('cycle ran in '..(timeit())..' ms')
