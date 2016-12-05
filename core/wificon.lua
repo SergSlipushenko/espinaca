@@ -4,11 +4,10 @@ local connect=function(self, aps)
     if not aps then aps = APS end
     wifi.setmode(wifi.STATION)
     wifi.setphymode(wifi.PHYMODE_N)
-    local ft_list = ftr.Future()
+    local ft_list = ftr.Future():timeout(3000)
     local aps_around = ft_list:run(wifi.sta.getap,ft_list:callbk())
-    if not aps_around then return end
     for _, ap in ipairs(aps) do
-        if aps_around[ap.ssid] then
+        if not aps_around or aps_around[ap.ssid] then
             wifi.sta.config(ap.ssid,ap.pass,0)
             print('Try connect to '..ap.ssid)
             local ft = ftr.Future():timeout(10000)

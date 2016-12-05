@@ -1,4 +1,4 @@
-require 'netcon'
+require 'commons'
 ftr.spawn(function()
 print(node.heap())
 nt.deploy({wifi=true ,mqtt=true})

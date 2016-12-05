@@ -42,7 +42,7 @@ local do_cycle = function(cron, cfg)
     cycle_done = true
     if cfg.dsleep then 
         print('cycle ran in '..(timeit())..' ms')
-        node.dsleep((cfg.cycle-timeit()%cfg.cycle)*1000,4)
+        node.dsleep((cfg.cycle-timeit()%cfg.cycle)*1000,2)
     end
 end
 
