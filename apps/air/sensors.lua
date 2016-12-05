@@ -18,6 +18,6 @@ return function()
         hum = htu:hum()
     end             
     heap = node.heap()
-    print(ppm,temp,hum,press,heap) 
+    print(ppm,temp,hum,press,heap)
     gpio.serout(pins.IO2,gpio.LOW,{5000,200000},3, function() end)
 end

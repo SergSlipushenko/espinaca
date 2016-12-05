@@ -3,17 +3,17 @@ require 'commons'
 wifi.setmode(wifi.NULLMODE)
 n_cycle = 0
 local cycle_done = true
-local cycles_to_skip = nil
 local do_cycle = function(cron, cfg)
-    if not cycle_done then 
-        print('Cycle skipped. Left: ', cycles_to_skip);
-        if cycles_to_skip then 
-            if cycles_to_skip == 0 then node.restart() 
-            else cycles_to_skip = cycles_to_skip - 1 end
-        end
-        return
+    if not cycle_done then print('Cycle skipped.'); return end
+    cycle_done = false
+    local watchdog
+    if cfg.watchdog_interval then
+        watchdog = tmr.create()
+        watchdog:alarm(cfg.watchdog_interval, tmr.ALARM_SINGLE, function()
+            print('Cycle has hung. Reboot.')
+            node.restart()
+        end)
     end
-    cycle_done = false; cycles_to_skip=cfg.cycles_to_skip
     n_cycle = rtcmem.read32(cfg.cycle_cell) 
     rtcmem.write32(cfg.cycle_cell,n_cycle + 1)
     print('Cycle : ', n_cycle)
@@ -40,6 +40,7 @@ local do_cycle = function(cron, cfg)
     end
     while next(async_jobs) do ftr.sleep(100) end
     cycle_done = true
+    if watchdog then watchdog:unregister() end
     if cfg.dsleep then 
         print('cycle ran in '..(timeit())..' ms')
         node.dsleep((cfg.cycle-timeit()%cfg.cycle)*1000,2)
