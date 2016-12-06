@@ -48,19 +48,34 @@ local do_cycle = function(cron, cfg)
 end
 
 ftr.spawn(function()
-    local _, bootr = node.bootreason()
     local cfg = ldfile('main_cfg.lua') or {}
     local on_boot = cfg.on_boot or {}
     local croncfg = cfg.cron or {}
     local crontab = cfg.crontab
-    cfg = nil
+    local count = 2
+    -- try to boot in engineering mode
+    gpio.mode(2, gpio.INPUT)
+    for n = 5,1,-1 do
+        if gpio.read(3) == gpio.LOW then count = count - 1; print(count) end
+        ftr.sleep(150)
+    end
+    if count <= 0 then
+        eng_mode = ldfile((cfg.eng_mode)..'.lua') or ldfile((cfg.eng_mode)..'.lc')
+        if eng_mode then 
+            print('Execute :', cfg.eng_mode)
+            eng_mode(); return 
+        end
+    end
+    -- Reset cycle counter on power on
     if rtcfifo then 
         if rtcfifo.ready() == 0 and croncfg.cycle_cell then
             rtcmem.write32(croncfg.cycle_cell, 0)
         end
         rtcfifo.prepare()
     end
-    if (bootr ~= 5) or (bootr == 6 and rtctime and rtctime.get() == 0) then
+    -- Execute on_boot script
+    local _, bootr = node.bootreason()    
+    if not((bootr == 5) or (bootr == 6 and rtctime and rtctime.get() ~= 0)) then
         if on_boot.ntp_sync then nt.deploy({wifi=true}) end
         if on_boot.ntp_sync or on_boot.ntp_sync == nil then
             dofile('rtc_sync.lua')()
@@ -74,6 +89,7 @@ ftr.spawn(function()
             else print(on_boot.script .. '.lua not found') end
         else print('No boot script.') end
     end
+    -- Start cron
     if not crontab then crontab = ldfile('crontab.lua') end
     if not crontab then print('no crontab'); return end
     do_cycle(crontab, croncfg)

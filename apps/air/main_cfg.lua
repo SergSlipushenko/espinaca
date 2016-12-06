@@ -1,4 +1,5 @@
 return {
+    eng_mode = 'mqconsole',
     on_boot = {
         ntp_sync = false,
         script = 'boot'

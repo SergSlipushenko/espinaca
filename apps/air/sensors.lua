@@ -3,7 +3,7 @@ return function()
         ft = ftr.Future():timeout(2000)
         mhz19:get_co2_level(ft:callbk())
         ppm = ft:result()
-        if ppm<300 or ppm>5500 then ppm=nil end
+        if ppm and (ppm<300 or ppm>5500) then ppm=nil end
         ft=nil
     else ppm = nil end
     if sensor == 'bme' then

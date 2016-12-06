@@ -14,5 +14,5 @@ return function()
             d:drawStr(0,16,temp/10 .. '.' .. temp%10 .. ' ' .. hum .. '%')
         end      
         d:drawStr(0,32,time)                
-    end)   
+    end)
 end

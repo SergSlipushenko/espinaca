@@ -61,6 +61,7 @@ return {
                 self.watchdog:unregister()
                 self.watchdog = nil
                 self.client:on('offline', function()
+                    print('MQTT reconnect')
                     self.client:on('offline', function() end)
                     self:try_to_connect()
                 end)
@@ -102,6 +103,10 @@ return {
             self.client:on('message', f_stub)
             self.client:close()
         end
-        if self.running then self:try_to_connect() end
+        if self.running then
+            local ft = ftr.Future()
+            self:try_to_connect(ft:callbk())
+            ft:wait() 
+        end
     end
 }
