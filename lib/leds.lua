@@ -17,6 +17,21 @@ local leds = {
     end,
     show = function(self, led, back, n)
         ws2812.write(string.rep(led,n) .. string.rep(back,self.total-n))
-    end
+    end,
+    hsv2grb = function(h, s, v)
+        local s = s or 255
+        local v = v or 255
+        if s == 0 then return v, v, v end
+        local base = (255 - s)*v/256
+        local i = h/60
+        local r, g, b
+        if i == 0 then r, g, b = v, (((v-base)*h)/60)+base, base
+        elseif i == 1 then r, g, b = (((v-base)*(60-(h%60)))/60)+base, v, base
+        elseif i == 2 then r, g, b = base, v, (((v-base)*(h%60))/60)+base
+        elseif i == 3 then r, g, b = base, (((v-base)*(60-(h%60)))/60)+base, v
+        elseif i == 4 then r, g, b = (((v-base)*(h%60))/60)+base, base, v
+        elseif i == 5 then r, g, b = v, base, (((v-base)*(60-(h%60)))/60)+base end
+        return g/2, r/2, b
+    end    
 }
 return leds
