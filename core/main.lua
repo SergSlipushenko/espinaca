@@ -11,7 +11,7 @@ local do_cycle = function(cron, cfg)
         watchdog = tmr.create()
         watchdog:alarm(cfg.watchdog_interval, tmr.ALARM_SINGLE, function()
             print('Cycle has hung. Reboot.')
-            node.restart()
+            node.dsleep(1)
         end)
     end
     n_cycle = rtcmem.read32(cfg.cycle_cell) 
@@ -49,6 +49,13 @@ end
 
 ftr.spawn(function()
     local cfg = ldfile('main_cfg.lua') or {}
+    if next(cfg) == nil then
+        local con_mode = ldfile('mqconsole.lua') or ldfile('mqconsole.lc')
+        if con_mode then 
+            print('Execute : mqconsole.lua')
+            con_mode(); return 
+        end
+    end
     local on_boot = cfg.on_boot or {}
     local croncfg = cfg.cron or {}
     local crontab = cfg.crontab

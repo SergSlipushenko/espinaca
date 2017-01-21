@@ -25,5 +25,5 @@ return function()
         end
     end)
     print('Publish discovery')
-    nt.mqtt:publish('node/discover/'..node_name, node_name, 0, 0, true)    
+    nt.mqtt:publish('node/discover/'..node_name, node_name, 0, 1, true)    
 end

@@ -31,7 +31,7 @@ local leds = {
         elseif i == 3 then r, g, b = base, (((v-base)*(60-(h%60)))/60)+base, v
         elseif i == 4 then r, g, b = (((v-base)*(h%60))/60)+base, base, v
         elseif i == 5 then r, g, b = v, base, (((v-base)*(60-(h%60)))/60)+base end
-        return g/2, r/2, b
+        return g, r, b
     end    
 }
 return leds

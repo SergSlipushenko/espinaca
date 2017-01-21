@@ -1,0 +1,2 @@
+#!/bin/bash -x
+for f in *.lua; do $LUATOOL -b 115200 -f "$f" --delay 0.01; done
