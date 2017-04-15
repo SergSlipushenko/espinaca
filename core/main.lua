@@ -67,9 +67,10 @@ ftr.spawn(function()
         ftr.sleep(150)
     end
     if count <= 0 then
-        eng_mode = ldfile((cfg.eng_mode)..'.lua') or ldfile((cfg.eng_mode)..'.lc')
+        local eng_mode_f = (cfg.eng_mode or 'mqconsole')..'.lua'
+        local eng_mode = ldfile(eng_mode_f)
         if eng_mode then 
-            print('Execute :', cfg.eng_mode)
+            print('Execute :', eng_mode_f)
             eng_mode(); return 
         end
     end
