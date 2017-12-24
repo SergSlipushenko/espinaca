@@ -43,7 +43,7 @@ class Router(object):
             self.routes[message.topic](message.payload)
 
 
-def on_connect(client, userdata, rc):
+def on_connect(client, userdata, flags, rc):
     if rc != 0:
         print("Connection returned result: %d" % rc)
         sys.exit(1)

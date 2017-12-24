@@ -1,6 +1,8 @@
-print '                \n +-+-+-+-+-+-+-+\n |E|S|P|C|O|R|E|\n +-+-+-+-+-+-+-+\n';
+print [[
+ +-+-+-+-+-+-+-+-+
+ |E|S|P|i|n|a|c|a|
+ +-+-+-+-+-+-+-+-+]]
 require 'commons'
-wifi.setmode(wifi.NULLMODE)
 n_cycle = 0
 local cycle_done = true
 local do_cycle = function(cron, cfg)
@@ -73,13 +75,13 @@ ftr.spawn(function()
             print('Execute :', eng_mode_f)
             eng_mode(); return 
         end
-    end
+    end 
     -- Reset cycle counter on power on
     if rtcfifo then 
         if rtcfifo.ready() == 0 and croncfg.cycle_cell then
             rtcmem.write32(croncfg.cycle_cell, 0)
+            rtcfifo.prepare()
         end
-        rtcfifo.prepare()
     end
     -- Execute on_boot script
     local _, bootr = node.bootreason()    

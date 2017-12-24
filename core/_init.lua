@@ -1,3 +1,4 @@
+if wifi then wifi.setmode(wifi.NULLMODE) end
 local now = tmr.now; _start = now(); timeit = function() return (now()-_start)/1000 end
 go = function() return pcall(dofile,'main.lua') end
 local _go = function()
