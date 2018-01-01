@@ -8,7 +8,7 @@ local connect=function(self, aps)
     local aps_around = ft_list:run(wifi.sta.getap,ft_list:callbk())
     for _, ap in ipairs(aps) do
         if not aps_around or aps_around[ap.ssid] then
-            wifi.sta.config(ap.ssid,ap.pass,0)
+            wifi.sta.config({ssid = ap.ssid, pwd = ap.pass, auto = false })
             print('Try connect to '..ap.ssid)
             local ft = ftr.Future():timeout(10000)
             wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, ft:callbk())
