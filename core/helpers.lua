@@ -16,3 +16,21 @@ function dump(o, indent)
         return tostring(o)
     end
 end
+viewfile = function(fname) 
+    file.open(fname, "r")
+    local buf = ''
+    repeat 
+        local line=file.readline()
+        if line then
+            local rline,_ = string.gsub(line, "\n", "")
+            if buf:len() > 0 then buf = buf..'\n'..rline
+            else buf = rline end
+            if buf:len() > 128 then
+                print(buf)
+                buf=''
+            end
+        end
+    until line == nil
+    print(buf)
+    file.close()
+end
