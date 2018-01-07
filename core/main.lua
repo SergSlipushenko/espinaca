@@ -16,10 +16,10 @@ local do_cycle = function(cron, cfg)
             node.dsleep(1)
         end)
     end
-    n_cycle = rtcmem.read32(cfg.cycle_cell) 
+    local n_cycle = rtcmem.read32(cfg.cycle_cell)
     rtcmem.write32(cfg.cycle_cell,n_cycle + 1)
     print('Cycle : ', n_cycle)
-    async_jobs = {} 
+    local async_jobs = {}
     for _, job in ipairs(cron) do
         if n_cycle % job.every == 0 then
             local jobfile = job.job..'.lua'
@@ -52,9 +52,9 @@ end
 ftr.spawn(function()
     local cfg = ldfile('main_cfg.lua') or {}
     if next(cfg) == nil then
-        local con_mode = ldfile('mqconsole.lua') or ldfile('mqconsole.lc')
+        local con_mode = ldfile('wsconsole.lua')
         if con_mode then 
-            print('Execute : mqconsole.lua')
+            print('No app configuration found. Bootstraping with wsconsole.lua')
             con_mode(); return 
         end
     end
@@ -69,7 +69,7 @@ ftr.spawn(function()
         ftr.sleep(150)
     end
     if count <= 0 then
-        local eng_mode_f = (cfg.eng_mode or 'mqconsole')..'.lua'
+        local eng_mode_f = (cfg.eng_mode or 'wsconsole')..'.lua'
         local eng_mode = ldfile(eng_mode_f)
         if eng_mode then 
             print('Execute :', eng_mode_f)
@@ -104,7 +104,7 @@ ftr.spawn(function()
     if not crontab then print('no crontab'); return end
     do_cycle(crontab, croncfg)
     if not croncfg.dsleep then
-        cron_tmr = tmr.create()
+        local cron_tmr = tmr.create()
         cron_tmr:alarm(croncfg.cycle, tmr.ALARM_AUTO, function() ftr.spawn(do_cycle, crontab, croncfg) end)
     end
 end)

@@ -37,7 +37,7 @@ def create_pair(master,slave):
     return p
 
 
-def setup(server, ser_out, ser_in):
+def setup(server, ser_out, ser_in, node):
 
     shared = {'terminate': False}
 
@@ -69,6 +69,7 @@ def setup(server, ser_out, ser_in):
             sys.stdout.flush()
 
     def on_open(ws):
+        ws.send('join %s' % node)
         print("Connected!")
         Thread(target=serial_loop, args=(ws,)).start()
 
@@ -89,14 +90,14 @@ def setup(server, ser_out, ser_in):
 
 
 @easyargs
-def main(cli=False, server='pi.lcl'):
+def main(cli=False, server='pi.lcl', node=''):
     if cli:
-        setup(server, sys.stdout, sys.stdin)
+        setup(server, sys.stdout, sys.stdin, node)
     else:
         create_pair(MASTER_PTY, SLAVE_PTY)
         print('Link on virtual serial: %s' % SLAVE_PTY)
         with serial.Serial('/var/tmp/master', 115200,
                            rtscts=True, dsrdtr=True) as ser:
-            setup(server, ser, ser)
+            setup(server, ser, ser, node)
 
 main()

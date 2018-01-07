@@ -34,3 +34,10 @@ viewfile = function(fname)
     print(buf)
     file.close()
 end
+listfiles = function()
+    print('{')
+    for k,v in pairs(file.list()) do 
+        print('"name":"'..k..'", "size":'..v..', "md5": "'..crypto.toBase64(crypto.fhash("sha1",k)):sub(1,8)..'"') 
+    end;
+    print('}')
+end 

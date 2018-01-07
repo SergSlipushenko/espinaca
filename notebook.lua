@@ -22,26 +22,11 @@ ws:connect('ws://192.168.88.248:8000/')
 ttt:alarm(300, tmr.ALARM_AUTO, function() wscon:send('zzzzz',1) end)
 ws:close()
 
-viewfile('rtc_sync.lua')
-=collectgarbage("count")
-
-require 'commons'
-require 'helpers'
-=node.heap()
-fifo_send={}
-for a=1,300 do
-table.insert(fifo_send, 'aaaaaaaaaaaaa'..a)
-end
-=node.heap()
-repeat
-l=table.remove(fifo_send, 1)
-until l == nil
-fifo_send=nil
-=node.heap()
-
-a={}
-a[3]='dddddd'
-=a[3]
-aa = a[3]
-=aa
-a[3] = nil
+leds = require 'leds'
+ws2812.init()
+total = 20
+buf = ws2812.newBuffer(total, 3)
+tt = tmr.create()
+tt:alarm(1000, tmr.ALARM_AUTO, function()
+g, r, b = leds.hsv2grb(math.random(0,359), 255, 255);buf:fill(r, g, b);ws2812.write(buf)
+end)
