@@ -1,5 +1,5 @@
 require 'commons'
-local node_name = string.format('NODE-%x', node.chipid()):upper()
+local node_name = NODEID
 local routes = {}
 local dispatch = function(_, topic, message)
     if routes[topic] then routes[topic].handler(message) end
@@ -17,7 +17,7 @@ return {
         local cbk = ft:callbk()
         local errcbk = ft:errcallbk()
         self.client:connect(MQTT.server, MQTT.port, 0, function(c) cbk(c) end, function(c,r) errcbk(c,r) end)
-        ok = ft:wait()
+        local ok = ft:wait()
         cbk = nil
         errcbk = nil
         if ok then
@@ -56,7 +56,7 @@ return {
             self.connecting = true
             self.client:close()
             ftr.sleep(200)
-            ok, err = self:connect()
+            local ok, err = self:connect()
             if ok then
                 self.watchdog:unregister()
                 self.watchdog = nil

@@ -1,9 +1,8 @@
-require 'commons'
 return function()
-    if sntp and nt.wifi and nt.wifi.running then
+    if nt and ftr and nt.wifi and nt.wifi.running then
         local ntp_server = ldfile('main_cfg.lua').sntp_server
         local ft_sync = ftr.Future():timeout(7000)
-        if ntp_server then
+        if sntp and ntp_server then
             local attempt = 3
             while attempt > 0 do           
                 sntp.sync(server, ft_sync:callbk(),ft_sync:errcallbk())
@@ -20,7 +19,7 @@ return function()
             http.get('http://currentmillis.com/time/seconds-since-unix-epoch.php', {}, ft_sync:callbk())
             local c, data = ft_sync:result()
             if data then 
-                sec = tonumber(data)
+                local sec = tonumber(data)
                 rtctime.set(sec, 0) 
                 print('(HTTP)Time synced to :', sec, 0)
             end

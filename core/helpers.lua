@@ -40,4 +40,7 @@ listfiles = function()
         print('"name":"'..k..'", "size":'..v..', "md5": "'..crypto.toBase64(crypto.fhash("sha1",k)):sub(1,8)..'"') 
     end;
     print('}')
-end 
+end
+raise_panic = function()
+    while true do uart.write(0, 'Bye!') end
+end

@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+
+import logging
+import logging.handlers
+
 import StringIO
 import sys
 
@@ -9,6 +14,11 @@ clients = {}
 
 REDIRECT_OUTPUT = True
 
+handler = logging.handlers.SysLogHandler(address='/dev/log')
+handler.setFormatter(logging.Formatter('%(filename)s[%(process)d]: %(message)s'))
+logger = logging.getLogger('ws_server')
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 def _exit(status=0, message=None):
     print(message)
@@ -71,9 +81,8 @@ class SimpleChat(WebSocket):
                 sys.stderr = sys.__stderr__
             self.sendMessage(out.getvalue().strip('\n'))
 
-
     def handleConnected(self):
-        print(self.address, 'connected')
+        logger.info('%s connected', self.address)
         clients[self.address] = None
 
     def handleClose(self):
@@ -82,11 +91,12 @@ class SimpleChat(WebSocket):
             rooms[room].remove(self)
         if not rooms[room]:
             rooms.pop(room)
-        print(self.address, 'closed')
+        logger.info('%s disconnected', self.address)
 
-server = SimpleWebSocketServer('0.0.0.0', 8000, SimpleChat)
+server = SimpleWebSocketServer('0.0.0.0', 8008, SimpleChat)
+
 try:
     server.serveforever()
 except KeyboardInterrupt:
     server.close()
-    print('Very end.')
+    logger.info('Killed')

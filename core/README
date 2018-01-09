@@ -1,5 +1,5 @@
 --[[
-The module introduces cooperative ``multithreading`` for Nodemcu platform.
+The module introduces cooperative ``multitasking`` for Nodemcu platform.
 It works on top of callbacks and reuses system scheduler. Basically, it is
 nothing more then converter callbacks to async/await-like interface. With this
 module it is possible to do not-blocking sleeps `futures.sleep(1000)` and run 
@@ -7,7 +7,7 @@ a few io-waiting jobs in parallel:
 `futures.spawn(dns_resovle); futures.spawn(send_http_req)`
 
 Future class represents asynchronously getting data. Instead of callbacks
-it allows to get async result in the same thread without blocking of internal 
+it allows to get async result in the same coroutine without block internal
 system processes. Future.callbk set up callback function for retriving data 
 and then Future.result waits for this callback and returns retrieved data from 
 callback call.

@@ -1,4 +1,3 @@
-local WS = (ldfile('secrets.lua') or {}).WS
 
 return {
     client = nil,
@@ -8,6 +7,7 @@ return {
     on_reconnect = nil,
     fifo_send = {},
     connect = function(self, on_connect)
+        local WS = (ldfile('secrets.lua') or {}).WS
         if not WS then return false end
         self.sender = tmr.create()
         self.sender:register(50, tmr.ALARM_AUTO, function(_sender)
