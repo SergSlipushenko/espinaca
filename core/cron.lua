@@ -12,7 +12,7 @@ local do_cycle = function(cron, cfg)
             node.dsleep(1)
         end)
     end
-    local n_cycle = rtcmem.read32(cfg.cycle_cell)
+    n_cycle = rtcmem.read32(cfg.cycle_cell)
     rtcmem.write32(cfg.cycle_cell,n_cycle + 1)
     print('Cycle : ', n_cycle)
     local async_jobs = {}

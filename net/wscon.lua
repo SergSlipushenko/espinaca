@@ -1,4 +1,3 @@
-
 return {
     client = nil,
     running = false,
