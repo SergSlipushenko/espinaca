@@ -5,7 +5,7 @@ print [[
 require 'commons'
 local cfg = ldfile('main_cfg.lua') or {}
 if next(cfg) == nil then
-    local wsc =ldfile('wsconsole.lua') or function() end; wsc()
+    local f = ldfile('wsconsole.lua') or f_stub; f()
     print('Bootstraping with wsconsole.lua')
 end
 local on_boot_script = cfg.on_boot_script
@@ -21,7 +21,7 @@ if not((bootr == 5) or (bootr == 6 and rtctime and rtctime.get() ~= 0)) then
             task_on_boot();
         else 
             print(on_boot_script..'.lua not found') 
-            local wsc =ldfile('wsconsole.lua') or function() end; wsc()
+            local f = ldfile('wsconsole.lua') or f_stub; f()
             print('Fallback to wsconsole.lua')
         end
     end
