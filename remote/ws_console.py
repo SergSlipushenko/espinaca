@@ -4,6 +4,7 @@ import serial
 import signal
 import subprocess
 import shlex
+import logging
 
 import websocket
 from threading import Thread
@@ -14,6 +15,7 @@ import sys
 MASTER_PTY = '/var/tmp/master'
 SLAVE_PTY = '/var/tmp/slave'
 
+logging.basicConfig(level=logging.DEBUG)
 
 def create_pair(master,slave):
     print 'starting socat'
@@ -88,10 +90,44 @@ def setup(server, ser_out, ser_in, node):
     ws.run_forever()
 
 
+def serve(server, node, on_connect):
+
+    def on_message(ws, message):
+        message = message.strip('\n') + '\n' if message.strip() != '>' else message
+        sys.stdout.write('!'+message+'+')
+        sys.stdout.flush()
+        if message.startswith('="Joined to '):
+            on_connect(ws)
+        else:
+            exit()
+
+    def on_open(ws):
+        ws.send('join %s' % node)
+        print("Connected!")
+
+    def on_close(ws):
+        print("Closed!")
+
+    def on_error(ws, error):
+        if str(error) and str(error) != 'None':
+            print(str(error))
+
+    ws = websocket.WebSocketApp(server,
+                                on_open=on_open,
+                                on_message=on_message,
+                                on_error=on_error,
+                                on_close=on_close)
+    ws.run_forever()
+
+
 
 @easyargs
-def main(cli=False, server='pi.lcl', node=''):
-    if cli:
+def main(cli=False, server='pi.lcl', node='', c=''):
+    if c:
+        def on_connect(ws):
+            ws.send(c)
+        serve(server, node, on_connect)
+    elif cli:
         setup(server, sys.stdout, sys.stdin, node)
     else:
         create_pair(MASTER_PTY, SLAVE_PTY)

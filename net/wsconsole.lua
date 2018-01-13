@@ -15,7 +15,7 @@ return function()
             node.output(function(result)
                 if ws then ws:buffered_send(result) end
             end, 1)
-            uart.write(0, 'console connected')
+            uart.write(0, 'console connected\n')
         end)
     end)
 end
