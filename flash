@@ -1,2 +1,2 @@
 #!/bin/bash -x
-./luatool.py -b 115200 -f $1 --delay 0.01
+${LUATOOL:-./luatool.py --delay 0.01} -b 115200 -f $1
