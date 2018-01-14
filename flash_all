@@ -1,2 +1,2 @@
 #!/bin/bash -x
-for f in $1/*.lua; do ./luatool.py -b 115200 -f "$f" --delay 0.05; done
+for f in $1/*.lua; do ./luatool.py -b 115200 -f "$f" --delay 0.2 -p /var/tmp/slave; done

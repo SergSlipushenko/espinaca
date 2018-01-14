@@ -15,6 +15,7 @@ clients = {}
 REDIRECT_OUTPUT = True
 
 handler = logging.handlers.SysLogHandler(address='/dev/log')
+#handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter('%(filename)s[%(process)d]: %(message)s'))
 logger = logging.getLogger('ws_server')
 logger.setLevel(logging.INFO)
@@ -28,6 +29,15 @@ def _exit(status=0, message=None):
 def _error(message):
     print(message)
     raise RuntimeError
+
+
+def join_client_room(client, room):
+    if room not in rooms:
+        rooms[room] = [client]
+    else:
+        rooms[room].append(client)
+    print('_="Joined %s:%s to %s"' % (client.address[0], client.address[1], room))
+    clients[client.address] = room
 
 
 class SimpleChat(WebSocket):
@@ -49,12 +59,7 @@ class SimpleChat(WebSocket):
                         print(room)
 
                 def join(self, room):
-                    if room not in rooms:
-                        rooms[room] = [client]
-                    else:
-                        rooms[room].append(client)
-                    print('="Joined to %s"' % room)
-                    clients[client.address] = room
+                    join_client_room(client, room)
 
             parser = Commands()
             line = self.data
@@ -82,8 +87,23 @@ class SimpleChat(WebSocket):
             self.sendMessage(out.getvalue().strip('\n'))
 
     def handleConnected(self):
-        logger.info('%s connected', self.address)
-        clients[self.address] = None
+        logger.info('%s:%s connected to %s', self.address[0], self.address[1], self.request.path)
+        room = self.request.path.strip('/')
+        if room:
+            if REDIRECT_OUTPUT:
+                out = StringIO.StringIO()
+                sys.stdout = out
+                sys.stderr = out
+                join_client_room(self, room)
+                sys.stdout = sys.__stdout__
+                sys.stderr = sys.__stderr__
+                for client in rooms[room]:
+                    if client != self:
+                        client.sendMessage(out.getvalue().strip('\n'))
+            else:
+                join_client_room(self, room)
+        else:
+            clients[self.address] = None
 
     def handleClose(self):
         room = clients.pop(self.address)

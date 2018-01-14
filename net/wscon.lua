@@ -7,7 +7,10 @@ return {
     fifo_send = {},
     connect = function(self, on_connect)
         local WS = (ldfile('secrets.lua') or {}).WS
-        if not WS then return false end
+        local service = (ldfile('main_cfg.lua') or {}).service
+        local service = service or NODEID
+        if not WS.url then return end
+        local url = WS.url..'/'..service
         self.sender = tmr.create()
         self.sender:register(50, tmr.ALARM_AUTO, function(_sender)
             local msg = table.remove(self.fifo_send, 1)
@@ -22,7 +25,7 @@ return {
         self.client:on("connection", function()
             self.connected = true
             if on_connect then on_connect(); on_connect = nil end
-            uart.write(0, 'connected to ', WS.url, '\n')
+            uart.write(0, 'connected to ', url, '\n')
         end)
         self.client:on("receive", function(_, msg, opcode)
             if self.on_receive then
@@ -49,7 +52,8 @@ return {
             client:on("close", f_stub)
             client = nil
         end)
-        self.client:connect(WS.url)
+        uart.write(0, 'Connecting to '..url..'\n')
+        self.client:connect(url)
     end,
     send = function(self, message)
         if self.connected then self.client:send(message, 1) end

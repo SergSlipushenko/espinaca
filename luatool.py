@@ -49,9 +49,10 @@ class AbstractTransport:
         raise NotImplementedError('Function not implemented')
 
     def writer(self, data):
-        self.writeln("file.writeline([==[" + data + "]==])\r")
+        self.writeln("file.writeline([==[" + data + "]==])\n")
 
     def performcheck(self, expected):
+        expected = expected.strip(' \n\r')
         line = ''
         char = ''
         i = -1
@@ -62,14 +63,14 @@ class AbstractTransport:
             if char == chr(13) or char == chr(10):  # LF or CR
                 if line != '':
                     line = line.strip()
-                    if line+'\r' == expected:
+                    if line == expected:
                         sys.stdout.write(" -> ok")
                     else:
                         if line[:4] == "lua:":
                             sys.stdout.write("\r\n\r\nLua ERROR: %s" % line)
                             raise Exception('ERROR from Lua interpreter\r\n\r\n')
                         else:
-                            expected = expected.split("\r")[0]
+                            expected = expected.split("\n")[0]
                             sys.stdout.write("\r\n\r\nERROR")
                             sys.stdout.write("\r\n send string    : '%s'" % expected)
                             sys.stdout.write("\r\n expected echo  : '%s'" % expected)
@@ -92,7 +93,7 @@ class SerialTransport(AbstractTransport):
         self.delay = delay
 
         try:
-            self.serial = serial.Serial(port, baud)
+            self.serial = serial.Serial(port, baud, rtscts=True, dsrdtr=True)
         except serial.SerialException as e:
             raise TransportError(e.strerror)
 
@@ -103,8 +104,8 @@ class SerialTransport(AbstractTransport):
         if self.serial.inWaiting() > 0:
             self.serial.flushInput()
         if len(data) > 0:
-            sys.stdout.write("\r\n->")
-            sys.stdout.write(data.split("\r")[0])
+            sys.stdout.write("\n->")
+            sys.stdout.write(data.split("\n")[0])
         self.serial.write(data)
         sleep(self.delay)
         if check > 0:
@@ -140,8 +141,8 @@ class TcpSocketTransport(AbstractTransport):
 
     def writeln(self, data, check=1):
         if len(data) > 0:
-            sys.stdout.write("\r\n->")
-            sys.stdout.write(data.split("\r")[0])
+            sys.stdout.write("\n->")
+            sys.stdout.write(data.split("\n")[0])
         self.socket.sendall(data)
         if check > 0:
             self.performcheck(data)
@@ -185,14 +186,14 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--id',      action='store_true',    help='Query the modules chip id.')
     parser.add_argument('-e', '--echo',    action='store_true',    help='Echo output of MCU until script is terminated.')
     parser.add_argument('--delay',         default=0.3,            help='Delay in seconds between each write.', type=float)
-    parser.add_argument('--delete',        default=None,           help='Delete a lua/lc file from device.')
+    parser.add_argument('--delete',        default=None,            help='Delete a lua/lc file from device.')
     parser.add_argument('--ip',            default=None,           help='Connect to a telnet server on the device (--ip IP[:port])')
     args = parser.parse_args()
 
     transport = decidetransport(args)
 
     if args.list:
-        transport.writeln("local l = file.list();for k,v in pairs(l) do print('name:'..k..', size:'..v)end\r", 0)
+        transport.writeln("local l = file.list();for k,v in pairs(l) do print('name:'..k..', size:'..v)end\n", 0)
         while True:
             char = transport.read(1)
             if char == '' or char == chr(62):
@@ -201,7 +202,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if args.id:
-        transport.writeln("=node.chipid()\r", 0)
+        transport.writeln("=node.chipid()\n", 0)
         id=""
         while True:
             char = transport.read(1)
@@ -213,7 +214,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if args.wipe:
-        transport.writeln("local l = file.list();for k,v in pairs(l) do print(k)end\r", 0)
+        transport.writeln("local l = file.list();for k,v in pairs(l) do print(k)end\n", 0)
         file_list = []
         fn = ""
         while True:
@@ -226,14 +227,22 @@ if __name__ == '__main__':
                 if fn:
                     file_list.append(fn.strip())
                 fn = ''
-        for fn in file_list[1:]:  # first line is the list command sent to device
+
+        file_list = [fn for fn in file_list[1:] if fn not in {
+            'init.lua', 'wsconsole.lua', 'mqconsole.lua',
+            'secrets.lua', 'wificon.lua', 'cron.lua', 'mqttcon.lua',
+            'wscon.lua', 'commons.lua', 'futures.lua', 'main.lua',
+            'rtc_sync.lua', 'netcon.lua', 'helpers.lua'
+        }]
+
+        for fn in file_list:  # first line is the list command sent to device
             if args.verbose:
-                sys.stderr.write("Delete file {} from device.\r\n".format(fn))
-            transport.writeln("file.remove(\"" + fn + "\")\r")
+                sys.stderr.write("Delete file {} from device.\n".format(fn))
+            transport.writeln("file.remove(\"" + fn + "\")\n")
         sys.exit(0)
 
     if args.delete:
-        transport.writeln("file.remove(\"" + args.delete + "\")\r")
+        transport.writeln("file.remove(\"" + args.delete + "\")\n")
         sys.exit(0)
 
     if args.dest is None:
@@ -263,15 +272,15 @@ if __name__ == '__main__':
 
     # set serial timeout
     if args.verbose:
-        sys.stderr.write("Upload starting\r\n")
+        sys.stderr.write("Upload starting\n")
 
     # remove existing file on device
     if args.append==False:
         if args.verbose:
             sys.stderr.write("Stage 1. Deleting old file from flash memory")
-        transport.writeln("file.open(\"" + args.dest + "\", \"w\")\r")
-        transport.writeln("file.close()\r")
-        transport.writeln("file.remove(\"" + args.dest + "\")\r")
+        transport.writeln("file.open(\"" + args.dest + "\", \"w\")\n")
+        transport.writeln("file.close()\n")
+        transport.writeln("file.remove(\"" + args.dest + "\")\n")
     else:
         if args.verbose:
             sys.stderr.write("[SKIPPED] Stage 1. Deleting old file from flash memory [SKIPPED]")
@@ -279,14 +288,14 @@ if __name__ == '__main__':
 
     # read source file line by line and write to device
     if args.verbose:
-        sys.stderr.write("\r\nStage 2. Creating file in flash memory and write first line")
+        sys.stderr.write("\nStage 2. Creating file in flash memory and write first line")
     if args.append:
-        transport.writeln("file.open(\"" + args.dest + "\", \"a+\")\r")
+        transport.writeln("file.open(\"" + args.dest + "\", \"a+\")\n")
     else:
-        transport.writeln("file.open(\"" + args.dest + "\", \"w+\")\r")
+        transport.writeln("file.open(\"" + args.dest + "\", \"w+\")\n")
     line = f.readline()
     if args.verbose:
-        sys.stderr.write("\r\nStage 3. Start writing data to flash memory...")
+        sys.stderr.write("\nStage 3. Start writing data to flash memory...")
     while line != '':
         transport.writer(line.strip())
         line = f.readline()
@@ -294,26 +303,26 @@ if __name__ == '__main__':
     # close both files
     f.close()
     if args.verbose:
-        sys.stderr.write("\r\nStage 4. Flush data and closing file")
-    transport.writeln("file.flush()\r")
-    transport.writeln("file.close()\r")
+        sys.stderr.write("\nStage 4. Flush data and closing file")
+    transport.writeln("file.flush()\n")
+    transport.writeln("file.close()\n")
 
     # compile?
     if args.compile:
         if args.verbose:
-            sys.stderr.write("\r\nStage 5. Compiling")
-        transport.writeln("node.compile(\"" + args.dest + "\")\r")
-        transport.writeln("file.remove(\"" + args.dest + "\")\r")
+            sys.stderr.write("\nStage 5. Compiling")
+        transport.writeln("node.compile(\"" + args.dest + "\")\n")
+        transport.writeln("file.remove(\"" + args.dest + "\")\n")
 
     # restart or dofile
     if args.restart:
-        transport.writeln("node.restart()\r")
+        transport.writeln("node.restart()\n")
     if args.dofile:   # never exec if restart=1
-        transport.writeln("dofile(\"" + args.dest + "\")\r", 0)
+        transport.writeln("dofile(\"" + args.dest + "\")\n", 0)
 
     if args.echo:
         if args.verbose:
-            sys.stderr.write("\r\nEchoing MCU output, press Ctrl-C to exit")
+            sys.stderr.write("\nEchoing MCU output, press Ctrl-C to exit")
         while True:
             sys.stdout.write(transport.read(1))
 
@@ -323,4 +332,4 @@ if __name__ == '__main__':
     # flush screen
     sys.stdout.flush()
     sys.stderr.flush()
-    sys.stderr.write("\r\n--->>> All done <<<---\r\n")
+    sys.stderr.write("\n--->>> All done <<<---\n")

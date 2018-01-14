@@ -17,6 +17,7 @@ SLAVE_PTY = '/var/tmp/slave'
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 def create_pair(master,slave):
     print 'starting socat'
     p = subprocess.Popen(
@@ -90,43 +91,29 @@ def setup(server, ser_out, ser_in, node):
     ws.run_forever()
 
 
-def serve(server, node, on_connect):
+def send(server, node, msg):
 
     def on_message(ws, message):
         message = message.strip('\n') + '\n' if message.strip() != '>' else message
-        sys.stdout.write('!'+message+'+')
-        sys.stdout.flush()
-        if message.startswith('="Joined to '):
-            on_connect(ws)
-        else:
-            exit()
+        if not message.startswith('Joined ') and message != '> ':
+            sys.stdout.write(message)
+            sys.stdout.flush()
+            ws.close()
 
     def on_open(ws):
-        ws.send('join %s' % node)
-        print("Connected!")
+        ws.send(msg)
 
-    def on_close(ws):
-        print("Closed!")
-
-    def on_error(ws, error):
-        if str(error) and str(error) != 'None':
-            print(str(error))
-
-    ws = websocket.WebSocketApp(server,
+    ws = websocket.WebSocketApp('/'.join((server, node)),
                                 on_open=on_open,
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close)
+                                on_message=on_message)
     ws.run_forever()
 
 
 
 @easyargs
-def main(cli=False, server='pi.lcl', node='', c=''):
+def main(cli=False, server='ws://pi.lcl:8008', node='', c=''):
     if c:
-        def on_connect(ws):
-            ws.send(c)
-        serve(server, node, on_connect)
+        send(server, node, c)
     elif cli:
         setup(server, sys.stdout, sys.stdin, node)
     else:
