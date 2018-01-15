@@ -1,0 +1,2 @@
+#!/bin/bash -x
+socat -d -d pty,link=/var/tmp/slave,raw,echo=0,waitslave tcp:${1}.local:2323

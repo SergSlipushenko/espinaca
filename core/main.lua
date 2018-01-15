@@ -5,8 +5,8 @@ print [[
 require 'commons'
 local cfg = ldfile('main_cfg.lua') or {}
 if next(cfg) == nil then
-    local f = ldfile('wsconsole.lua') or f_stub; f()
-    print('Bootstraping with wsconsole.lua')
+    local f = ldfile('tcpconsole.lua') or f_stub; f()
+    print('Bootstraping with tcpconsole.lua')
 end
 local on_boot_script = cfg.on_boot_script
 local crontab = cfg.crontab
@@ -20,8 +20,8 @@ if not((bootr == 5) or (bootr == 6 and rtctime and rtctime.get() ~= 0)) then
             success, _ = pcall(task_on_boot)
         end
         if not success then 
-            local f = ldfile('wsconsole.lua') or f_stub; f()
-            print('Fallback to wsconsole.lua')
+            local f = ldfile('tcpconsole.lua') or f_stub; f()
+            print('Fallback to tcpconsole.lua')
         end
     end
 end

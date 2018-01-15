@@ -14,7 +14,7 @@ function dump(o, indent)
         return  s
     else
         return tostring(o)
-    end
+    end 
 end
 viewfile = function(fname) 
     file.open(fname, "r")
